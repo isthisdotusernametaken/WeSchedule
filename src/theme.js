@@ -5,7 +5,7 @@
     provided to setTheme to replace the page's stylesheet.
 */
 
-// These objects are used only as immutable dictionaries, and property naming
+// These objects are used only as unchanging dictionaries, and property naming
 // conventions are ignored to simplify the code that sets the theme.
 const THEMES_DICT = Object.freeze({
     "Dark 1": ["Vapor", "https://bootswatch.com/5/vapor/bootstrap.min.css"],
@@ -16,10 +16,10 @@ const THEMES_DICT = Object.freeze({
 export const THEMES = Object.freeze(Object.fromEntries(
     Object.entries(THEMES_DICT).map(
         ([label, [name, _]]) => [label, name]
-    ) // Avoiding a list here makes THEMES truly immutable
+    ) // Avoiding a list here makes THEMES truly immutable and safe to export
 ));
 
-export const setTheme = (theme) => {console.log(theme);console.log(THEMES_DICT)
+export const setTheme = (theme) => {
     if (!Object.keys(THEMES_DICT).includes(theme))
         return false;
 

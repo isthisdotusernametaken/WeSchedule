@@ -1,4 +1,13 @@
 import React from "react";
+import './style.css'
+
+const Day = (props) => {
+    console.log(props)
+    return <td className="dateCell">
+        <p>Day: {props.day}</p>
+        </td>
+}
+
 
 class Calendar extends React.Component {
     constructor() {
@@ -17,19 +26,22 @@ class Calendar extends React.Component {
         //use css for each
         <div>
             <link rel="stylesheet" href="./Calendar.css" />
-            <div className="awesome" style={{ border: "1px solid red" }}>
-            </div>
-                <div className="calendar">
+            <div className="calendar">
                 <th rowSpan="7">Calendar</th>
                 <table>
                     <tbody>
                     <tr/>
                     <tr>
-                        <td class="dateCell">Day 1:</td>
-                        <td>Day 2:</td>
-                        <td>Day 3:</td>
-                        <td>Day 4:</td>
-                        <td>Day 5:</td>
+                        <Day day="1"></Day>
+                        <Day day="2"></Day>
+                        <Day day="3"></Day>
+                        <Day day="4"></Day>
+                        <Day day="5"></Day>
+                        <Day day="6"></Day>
+                        <Day day="7"></Day>
+                    </tr>
+                    <tr>
+                        <Day day="8"></Day>
                     </tr>
                     </tbody>
                 </table>

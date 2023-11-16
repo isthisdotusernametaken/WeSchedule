@@ -1,7 +1,7 @@
 import logo from './logo.svg';
 import './App.css';
 import React from "react";
-import { THEMES, setTheme } from "./theme.js";
+import { THEMES, setTheme } from "./components/theme.js";
 
 function App() {
 
@@ -26,31 +26,31 @@ function App() {
       <header className="App-header">
       <nav class="navbar navbar-expand-lg bg-primary" data-bs-theme="dark">
   <div class="container-fluid">
-    <a class="navbar-brand" href="#">WeSchedule</a>
+    <button class="navbar-brand">WeSchedule</button>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarColor01" aria-controls="navbarColor01" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarColor01">
       <ul class="navbar-nav me-auto">
         <li class="nav-item">
-          <a class="nav-link" href="#">Calander</a>
+          <button class="nav-link">Calander</button>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="#">Files</a>
+          <button class="nav-link">Files</button>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="#">Teams</a>
+          <button class="nav-link">Teams</button>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="#">Chats</a>
+          <button class="nav-link">Chats</button>
         </li>
         <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Themes</a>
+          <button class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Themes</button>
           <div class="dropdown-menu">
-            <a class="dropdown-item" href="#" onClick={handleSend1}>Dark 1</a>
-            <a class="dropdown-item" href="#" onClick={handleSend2}>Dark 2</a>
-            <a class="dropdown-item" href="#" onClick={handleSend3}>Light 1</a>
-            <a class="dropdown-item" href="#" onClick={handleSend4}>Light 2</a>
+            <button class="dropdown-item" onClick={handleSend1}>Dark 1</button>
+            <button class="dropdown-item" onClick={handleSend2}>Dark 2</button>
+            <button class="dropdown-item" onClick={handleSend3}>Light 1</button>
+            <button class="dropdown-item" onClick={handleSend4}>Light 2</button>
           </div>
         </li>
         
@@ -58,7 +58,7 @@ function App() {
     </div>
     <li class="nav-item">
       {/* Curious why it matters what the class name is in relation to the link I put in the index.html and the account_box name */}
-      <a class="nav-link" href="#"><span class="material-symbols-outlined">account_box</span></a>
+      <button class="nav-link"><span class="material-symbols-outlined">account_box</span></button>
     </li>
   </div>
 </nav>

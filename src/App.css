@@ -2,17 +2,12 @@
   margin: 0 0.5rem;
   display: flex;
 }
-
 .material-symbols-outlined {
-  float: right;
   color: aliceblue;
   font-variation-settings:
   'FILL' 1,
   'wght' 300,
   'GRAD' 0,
   'opsz' 100;
-  font-size: 2.5rem;
-  padding: 0rem;
   background-color: rgba(0, 255, 255, 0.6);
-  border-radius: .4rem;
 }

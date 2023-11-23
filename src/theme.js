@@ -19,6 +19,6 @@ export const setTheme = (ind) => {
     if (ind < 0 || ind >= THEMES.length)
         return false;
 
-    document.getElementById("css-theme").href = THEMES_DICT[ind][1];
+    document.getElementById("css-theme").href = THEMES_AND_LINKS[ind][1];
     return true;
 }

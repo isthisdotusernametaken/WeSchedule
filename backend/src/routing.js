@@ -4,6 +4,9 @@
 // Routing Utilities
 //
 // Author: Joshua Barbee
+// The success and error format and many of the
+// methods are based on my Assignment 4
+// submission.
 // ----------------------------------------------
 
 // ----------------------------------------------------------------------------

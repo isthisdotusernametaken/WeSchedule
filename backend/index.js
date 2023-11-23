@@ -3,6 +3,7 @@
 // WeSchedule Backend
 //
 // Author: Joshua Barbee
+// ----------------------------------------------
 
 const PORT = 3000;
 

@@ -69,9 +69,12 @@ const dataRetrievalError = res =>
 // ----------------------------------------------------------------------------
 
 // Return an error message for failures outside of routing code
-const handleErrors = (res, err) => {
-    if (err.type === "entity.parse.failed")
-        clientError(res, "Invalid JSON in body.");
+const handleErrors = (req, res, err) => {
+    if (err.type === "entity.parse.failed") // Bad body format
+        clientError(res,
+            req.get("Content-Type") === "application/json" ?
+            "Invalid JSON in body" : "Invalid body format."
+        );
     else // All unknown errors
         serverError(res, "Server error. Please report to admin.")
 }

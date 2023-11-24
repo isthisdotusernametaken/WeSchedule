@@ -15,16 +15,17 @@ const {handleErrors, getFileSuccess} = require("./src/routing")
 
 // ----------------------------------------------------------------------------
 // (A)  Create an express application using the above modules.
-//      Incoming requests' bodies are parsed as JSON.
-//      All uncaught errors (including for invalid JSON) are captured to ensure
-//          response body uniformity.
+//      Incoming requests' bodies are parsed as JSON unless specified otherwise
+//          by Content-Type (e.g., for images or other binary data).
+//      All uncaught errors (including for invalid body format) are captured to
+//          ensure response body uniformity.
 // ----------------------------------------------------------------------------
 const app = express();
 app.use(express.json())
 app.use(cors());
 
 // Intercept errors to ensure consistent error messages.
-app.use((err, req, res, next) => err ? handleErrors(res, err) : next());
+app.use((err, req, res, next) => err ? handleErrors(req, res, err) : next());
 
 // ----------------------------------------------------------------------------
 // (C)  Add the routes for the UI, the documentation, and the services.

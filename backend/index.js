@@ -10,7 +10,7 @@
 // (https://canvas.uw.edu/courses/1669859/files/111914835).
 // ----------------------------------------------
 
-const PORT = 3000;
+const PORT = 3001; // 3001 to avoid conflict with 3000 for frontend
 
 // ----------------------------------------------
 // Load necessary modules (express, cors)

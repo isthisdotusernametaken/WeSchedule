@@ -73,7 +73,7 @@ const handleErrors = (req, res, err) => {
     if (err.type === "entity.parse.failed") // Bad body format
         clientError(res,
             req.get("Content-Type") === "application/json" ?
-            "Invalid JSON in body" : "Invalid body format."
+            "Invalid JSON in body." : "Invalid body format."
         );
     else // All unknown errors
         serverError(res, "Server error. Please report to admin.")

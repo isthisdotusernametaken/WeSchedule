@@ -3,6 +3,11 @@
 // WeSchedule Backend
 //
 // Author: Joshua Barbee
+// This file is partially based on my index.js
+// for Assignment 4, which was mostly based on
+// the index.js file provided for the assignment
+// on Canvas
+// (https://canvas.uw.edu/courses/1669859/files/111914835).
 // ----------------------------------------------
 
 const PORT = 3000;

@@ -18,3 +18,8 @@
   'opsz' 100;
   background-color: rgba(0, 255, 255, 0.6);
 }
+
+.inner-frame {
+  background-color: red;
+  height: 10rem;
+}

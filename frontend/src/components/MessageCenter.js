@@ -4,6 +4,8 @@ import React, { useEffect, useRef, useState } from "react";
 // Created by:
 // Caleb,
 // Josh
+// Some of the React and jsx is inspired and was originally derrived from Assignment 3 script.js but has
+// been heavily changed.
 function MessageCenter({user}) {
 
     // Use state hooks to store the messages and the current message being sent.

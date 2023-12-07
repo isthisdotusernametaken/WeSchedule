@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+
 import './App.css'
 import AgoraRTM from "agora-rtm-sdk";
 import { v4 as uuid } from "uuid";
@@ -10,8 +9,6 @@ const client = AgoraRTM.createInstance(APP_ID);
 const CHANNEL_NAME = "wdj";
 // Upon loading app, get a unique id for the app.
 const uid = uuid();
-
-
 
 function App() {
   const [text, setText] = useState("");
@@ -77,7 +74,8 @@ function App() {
 
     <main>
       <div className="panel">
-        <div className="messages" ref={messagesRef}>
+{/* Ref messages to scroll down */}
+        <div className="messages" ref={messagesRef}> 
           {messages.map((message, index) => (
             <div key={index} className="message"> 
               {message.uid === uid && <div className="user-self">You:&nbsp;</div>}

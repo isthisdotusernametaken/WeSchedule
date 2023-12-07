@@ -44,8 +44,8 @@
   border-style: solid;
   border-color: #6f42c1;
   border-width: 2px;
-  border-bottom-right-radius: 3rem;
-  border-bottom-left-radius: 3rem;
+  border-bottom-right-radius: 1rem;
+  border-bottom-left-radius: 1rem;
 }
 .chat-field {
   width: 100%;
@@ -53,8 +53,8 @@
   border-style: solid;
   border-color: #6f42c1;
   border-width: 2px;
-  border-top-right-radius: 3rem;
-  border-top-left-radius: 3rem;
+  border-top-right-radius: 1rem;
+  border-top-left-radius: 1rem;
 }
 /* From Google Fonts */
 .material-symbols-outlined {

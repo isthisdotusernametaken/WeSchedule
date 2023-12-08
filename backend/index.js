@@ -62,10 +62,19 @@ app.use("/auth", require("./src/services/auth"));
 
 // If valid session, continue; otherwise, skip next callbacks.
 const authenticatedUser = express.Router()
-authenticatedUser.use((req, res, next) =>
-    req.session.uid ? next() : unauthorizedError(res,
-        "Invalid session. You must log in with /auth/login."
-    )
+authenticatedUser.use((req, res, next) => {
+    // eslint-disable-next-line
+    if (req.session.uid != null)
+        next();
+    else if (process.argv[2] === "noAuth") {
+        req.session.uid = 1;
+        next();
+    } else
+        unauthorizedError(res,
+            "Invalid session. You must log in with /auth/login."
+        );
+}
+    
 );
 // Valid session required for these services
 // authenticatedUser.use("/users", require("./src/services/users"));

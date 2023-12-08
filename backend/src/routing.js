@@ -10,7 +10,30 @@
 // ----------------------------------------------
 
 // ----------------------------------------------------------------------------
-// (A)  Report success to the client and return any necessary message or data.
+// (A)  Utility functions to simplify routing code.
+// ----------------------------------------------------------------------------
+
+// If the the specified property is not in the request body or is blank, send a
+// descriptive error and return true (so that the caller can immediately exit);
+// otherwise, return false to signal that the caller should not exit (the
+// property exists and is nonempty).
+const requireBodyParam = (req, res, param) => {
+    // eslint-disable-next-line
+    if (req.body[param] == undefined || `${req.body[param]}`.trim() === "") {
+        clientError(res, `The "${param}" property is required in the body.`);
+        return true; // Exit
+    } else {
+        return false; // Continue
+    }
+}
+
+// Require all of the specified properties in the request body, as for
+// requireBodyParam.
+const requireBodyParams = (req, res, ...params) =>
+    params.some(param => requireBodyParam(req, res, param));
+
+// ----------------------------------------------------------------------------
+// (B)  Report success to the client and return any necessary message or data.
 //      For modifying data (i.e., not GET), a JSON object with a success
 //      message in the "success" property is returned for successful requests.
 //      This allows the client to check for non-GET requests success via the
@@ -18,70 +41,85 @@
 // ----------------------------------------------------------------------------
 
 // Wrap the success message in an object for consistent JSON formatting.
-const successMsg = msg => ({success: msg});
+const successWithMsg = (res, status, msg) =>
+    res.status(status).json({success: msg});
 
 // Return the specified file with the status code 200 OK.
 const getFileSuccess = (res, filename, rootDir) =>
     res.status(200).sendFile(filename, {root: rootDir});
 
 // Return the specified data as a JSON object with the status code 200 OK.
+// This supports GET requests.
 const getSuccess = (res, output) => res.status(200).json(output);
 
 // Report successful resource creation to the client with status code 201
 // Created and the specified message.
-// This for some but not necessarily all POST requests.
-const createSuccess = (res, msg) => res.status(201).json(successMsg(msg));
+// This supports some but not necessarily all POST requests.
+const createSuccess = (res, msg) => successWithMsg(res, 201, msg);
 
-// Report successful resource updating to the client with status code 200 OK
-// and the specified message.
-const putSuccess = (res, msg) => res.status(200).json(successMsg(msg));
-
-// Report successful resource deletion to the client with status code 200 OK
-// and the specified message.
-const deleteSuccess = (res, msg) => res.status(200).json(successMsg(msg));
+// Report success with status 200 and a message. This supports
+// This supports DELETE and PUT requests and the remaining POST requests.
+const success200 = (res, msg) => successWithMsg(res, 200, msg);
 
 // ----------------------------------------------------------------------------
-// (B)  Report an error to the client.
+// (C)  Report an error to the client.
 //      All error messages are returned in the "error" property of a JSON
 //      object so that errors can be easily detected by checking for the
-//      presence of the "error" property
+//      presence of the "error" property.
 // ----------------------------------------------------------------------------
 
 // Wrap the error message in an object for consistent JSON formatting.
-const errorMsg = msg => ({error: msg});
+const error = (res, status, msg) => res.status(status).json({error: msg});
 
 // Report the specified error with a 400 Bad Request status code to indicate
 // client error.
-const clientError = (res, msg) => res.status(400).json(errorMsg(msg));
+const clientError = (res, msg) => error(res, 400, msg);
+
+// Report the specified error with a 400 Bad Request status code to indicate
+// client error.
+const unauthorizedError = (res, msg) => error(res, 401, msg);
 
 // Report the specified error with a 500 Internal Server Error status code to
-// indicate server error.
-const serverError = (res, msg) => res.status(500).json(errorMsg(msg));
+// indicate server error. Log the error to the console for easier diagnosis.
+const serverError = (res, err, msg) => {
+    error(res, 500, msg);
+    console.error(err);
+};
 
 // Report a data retrieval error.
 // This should be used when any unexpected SQL error occurs.
-const dataRetrievalError = res =>
-    serverError(res, "Error in data retrieval. Please report to admin.");
+const dbError = (res, err) =>
+    serverError(res, err, "Data error. Please report to admin.");
+
+// Report the specified error with a 500 Internal Server Error status code to
+// indicate server error.
+const unknownError = (res, err) =>
+    serverError(res, err, "Server error. Please report to admin.");
 
 // ----------------------------------------------------------------------------
-// (C)  Handle all uncaught errors from external modules before sending
-//      response. 
+// (D)  Handle all uncaught errors from external modules and custom code to
+//      (1) reduce checking in the processing code for routes and to (2) ensure
+//          a consistent error format.
 // ----------------------------------------------------------------------------
 
-// Return an error message for failures outside of routing code
-const handleErrors = (req, res, err) => {
+// Return an error message for failures before routing code.
+const handleErrorsBefore = (req, res, err) => {
     if (err.type === "entity.parse.failed") // Bad body format
         clientError(res,
             req.get("Content-Type") === "application/json" ?
             "Invalid JSON in body." : "Invalid body format."
         );
     else // All unknown errors
-        serverError(res, "Server error. Please report to admin.")
+        unknownError(res, err);
 }
+
+// Return an error message for unhandled errors in the routing code.
+const handleErrorsAfter = (req, res, err) => unknownError(res, err);
 
 
 module.exports = {
-    getFileSuccess, getSuccess, createSuccess, putSuccess, deleteSuccess,
-    clientError, serverError, dataRetrievalError,
-    handleErrors
+    requireBodyParams,
+    getFileSuccess, getSuccess, createSuccess, success200,
+    clientError, unauthorizedError, serverError, dbError,
+    handleErrorsBefore, handleErrorsAfter
 };

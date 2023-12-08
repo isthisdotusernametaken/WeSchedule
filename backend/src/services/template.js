@@ -19,13 +19,15 @@ const router = require("express").Router();
 // ----------------------------------------------------------------------------
 
 // ----------------------------------------------------------------------------
-// (B)  Define data and behavior used by multiple routes.
+// (B)  Define routes.
 // ----------------------------------------------------------------------------
 
 // ----------------------------------------------------------------------------
 // (1) Retrieve ... .
 //
-// URI: http://localhost:3000/template
+// URI: http://localhost:3001/template
 router.get('/', (req, res) => {
     
 });
+
+module.exports = router;

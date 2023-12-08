@@ -11,12 +11,14 @@
 // ----------------------------------------------
 
 const PORT = 3001; // 3001 to avoid conflict with 3000 for frontend
+const MAX_SESSION_AGE = 1000 * 60 * 60 * 24 * 7 // 7 days before auto logout
 
 // ----------------------------------------------
-// Load necessary modules (express, cors)
+// Load necessary modules (express, cors, express-session)
 const express = require("express")
 const cors = require("cors")
-const {handleErrors, getFileSuccess} = require("./src/routing")
+const session = require("express-session")
+const { handleErrorsBefore, handleErrorsAfter, unauthorizedError } = require("./src/routing")
 
 // ----------------------------------------------------------------------------
 // (A)  Create an express application using the above modules.
@@ -29,17 +31,63 @@ const app = express();
 app.use(express.json())
 app.use(cors());
 
-// Intercept errors to ensure consistent error messages.
-app.use((err, req, res, next) => err ? handleErrors(req, res, err) : next());
+// Intercept errors before our code to ensure consistent error messages.
+app.use((err, req, res, next) =>
+    err ? handleErrorsBefore(req, res, err) : next());
+
 
 // ----------------------------------------------------------------------------
-// (C)  Add the routes for the UI, the documentation, and the services.
+// (B)  Add session manager.
+//
+//      IMPORTANT NOTE: When moving to production, make the following changes
+//          1. Specify a MySQL memory store with express-mysql-session, rather
+//             than using the current, insecure default of MemoryStore.
+//          2. Set "secure" to true in the cookie options object, and only use
+//             HTTPS, rather than the current HTTP communications that will
+//             not protect the session ID, email, or password.
 // ----------------------------------------------------------------------------
-app.get("/", (req, res) => getFileSuccess(res, "index.html", __dirname));
-app.get("/docs", (req, res) => getFileSuccess(res, "docs.html", __dirname));
+app.use(session({
+    secret: require("./config/sessionKey.json").key, // Load secret from config
+    resave: false,
+    saveUninitialized: false,
+    cookie: { secure: false, maxAge: MAX_SESSION_AGE }
+}))
+
+// ----------------------------------------------------------------------------
+// (C)  Add the route for the documentation.
+// ----------------------------------------------------------------------------
+
+// No session required for this service. This service establishes sessions.
+app.use("/auth", require("./src/services/auth"));
+
+// If valid session, continue; otherwise, skip next callbacks.
+const authenticatedUser = express.Router()
+authenticatedUser.use((req, res, next) =>
+    req.session.uid ? next() : unauthorizedError(res,
+        "Invalid session. You must log in with /auth/login."
+    )
+);
+// Valid session required for these services
+// authenticatedUser.use("/users", require("./src/services/users"));
+// authenticatedUser.use("/groups", require("./src/services/groups"));
+// authenticatedUser.use("/groups/:group/users", require("./src/services/groupUsers"));
+// authenticatedUser.use("/groups/:group/topics", require("./src/services/topics"));
+// authenticatedUser.use("/groups/:group/topics/:topic/messages", require("./src/services/messages"));
+// authenticatedUser.use("/translate", require("./src/services/translate"));
+// authenticatedUser.use("/groups/:group/events", require("./src/services/events"));
+// authenticatedUser.use("/groups/:group/stats", require("./src/services/stats"));
+// authenticatedUser.use("/groups/:group/visualization", require("./src/services/visualization"));
+
+app.use("/", authenticatedUser);
+
+
+
+app.use((err, req, res, next) =>
+    err ? handleErrorsAfter(req, res, err) : next());
 
 // ----------------------------------------------------------------------------
 // (D)  Listen to requests on specified port.
+// ----------------------------------------------------------------------------
 app.listen(PORT, () => {
     console.log("Express server is running and listening.");
 });

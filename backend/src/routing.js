@@ -32,6 +32,21 @@ const requireBodyParam = (req, res, param) => {
 const requireBodyParams = (req, res, ...params) =>
     params.some(param => requireBodyParam(req, res, param));
 
+// Require the specified request header, as for requireBodyParam.
+const requireHeader = (req, res, header) => {
+    // eslint-disable-next-line
+    if (req.get(header) == undefined || `${req.get(header)}`.trim() === "") {
+        clientError(res, `The "${header}" header is required.`);
+        return true; // Exit
+    } else {
+        return false; // Continue
+    }
+}
+
+// Require all of the specified request headers, as for requireHeader.
+const requireHeaders = (req, res, ...headers) =>
+    headers.some(header => requireHeader(req, res, header));
+
 // ----------------------------------------------------------------------------
 // (B)  Report success to the client and return any necessary message or data.
 //      For modifying data (i.e., not GET), a JSON object with a success
@@ -49,7 +64,7 @@ const getFileSuccess = (res, filename, rootDir) =>
     res.status(200).sendFile(filename, {root: rootDir});
 
 // Return the specified data as a JSON object with the status code 200 OK.
-// This supports GET requests.
+// This supports GET requests and other requests that return data.
 const getSuccess = (res, output) => res.status(200).json(output);
 
 // Report successful resource creation to the client with status code 201
@@ -80,9 +95,14 @@ const clientError = (res, msg) => error(res, 400, msg);
 const unauthorizedError = (res, msg) => error(res, 401, msg);
 
 // Report the specified error with a 500 Internal Server Error status code to
+// indicate server error.
+const serverErrorNoLog = (res, msg) => error(res, 500, msg);
+
+
+// Report the specified error with a 500 Internal Server Error status code to
 // indicate server error. Log the error to the console for easier diagnosis.
 const serverError = (res, err, msg) => {
-    error(res, 500, msg);
+    serverErrorNoLog(res, msg);
     console.error(err);
 };
 
@@ -118,8 +138,8 @@ const handleErrorsAfter = (req, res, err) => unknownError(res, err);
 
 
 module.exports = {
-    requireBodyParams,
+    requireBodyParams, requireHeaders,
     getFileSuccess, getSuccess, createSuccess, success200,
-    clientError, unauthorizedError, serverError, dbError,
+    clientError, unauthorizedError, serverErrorNoLog, serverError, dbError,
     handleErrorsBefore, handleErrorsAfter
 };

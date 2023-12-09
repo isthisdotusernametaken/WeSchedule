@@ -83,7 +83,7 @@ app.use("/auth", require("./src/services/auth"));
 // If valid session, continue; otherwise, skip next callbacks.
 const authenticatedUser = express.Router()
 // eslint-disable-next-line
-authenticatedUser.use((req, res, next) => req.session.uid != null ? next() :
+authenticatedUser.use((req, res, next) => req.session.user != null ? next() :
     unauthorizedError(res, "Invalid session. You must log in with /auth/login.")
 );
 
@@ -93,7 +93,7 @@ authenticatedUser.use((req, res, next) => req.session.uid != null ? next() :
 // authenticatedUser.use("/groups/:group/users", require("./src/services/groupUsers"));
 // authenticatedUser.use("/groups/:group/topics", require("./src/services/topics"));
 // authenticatedUser.use("/groups/:group/topics/:topic/messages", require("./src/services/messages"));
-// authenticatedUser.use("/translate", require("./src/services/translate"));
+authenticatedUser.use("/language", require("./src/services/language").router);
 // authenticatedUser.use("/groups/:group/events", require("./src/services/events"));
 // authenticatedUser.use("/groups/:group/stats", require("./src/services/stats"));
 // authenticatedUser.use("/groups/:group/visualization", require("./src/services/visualization"));

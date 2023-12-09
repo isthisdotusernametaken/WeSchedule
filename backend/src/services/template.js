@@ -7,15 +7,13 @@
 // ----------------------------------------------
 
 // Establish a connection to the database
-// Note that config.js will only be executed once despite being imported in
-// multiple files.
 const dbConnection = require("../dbConfig")
 
 // Create router for routes in this service
 const router = require("express").Router();
 
 // ----------------------------------------------------------------------------
-// (A)  Define data and behavior used by multiple routes.
+// (A)  Define data and behavior used by routes below.
 // ----------------------------------------------------------------------------
 
 // ----------------------------------------------------------------------------

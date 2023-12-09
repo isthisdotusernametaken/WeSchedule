@@ -10,8 +10,6 @@
 const router = require("express").Router();
 
 // Establish a connection to the database
-// Note that config.js will only be executed once despite being imported in
-// multiple files.
 const dbConnection = require("../dbConfig")
 
 // Cryptographic hashing for password
@@ -26,6 +24,10 @@ const {
     createSuccess, success200,
     clientError, dbError, serverError
 } = require("../routing");
+const { validLanguage } = require("./language");
+
+// Languages from translation service
+const languages = require("./language").languages;
 
 
 // ----------------------------------------------------------------------------
@@ -74,9 +76,10 @@ const hash = (pass, salt) =>
 // A salt to use if the email is incorrect. This avoids information leakage
 // about whether a user exists via the login process.
 // Note that this does not prevent detection of user's emails from the signup
-// service, which must check whether an email exists. The signup service may be
-// modified in the future to require unique usernames but not necessarily
-// unique emails to avoid leakage.
+// service, which checks whether an email exists. This may be updated in the
+// future to prevent leakage here, perhaps replacing the email uniqueness
+// constraint with a number of accounts that can be associated with a single
+// email and a requirement that new users validate email address ownership.
 const errorSalt = generateSalt();
 
 function validPass(res, pass) {
@@ -107,7 +110,7 @@ function validPass(res, pass) {
 // valid session from the same device if the same cookie is used.
 // Only set response data if res is defined (so that this code can be reused
 // for signup and login).
-const establishSession = (uid, name, req, res) => req.session.regenerate(err => {
+const establishSession = (user, name, req, res) => req.session.regenerate(err => {
     // If unable to confirm session, do not authorize subsequent requests.
     if (err) {
         if (res)
@@ -115,7 +118,7 @@ const establishSession = (uid, name, req, res) => req.session.regenerate(err => 
         return;
     }
 
-    req.session.uid = uid;
+    req.session.user = user;
     req.session.name = name;
     if (res)
         success200(res, "Logged in succesfully.");
@@ -147,7 +150,10 @@ async function validEmail(res, email) {
 // ----------------------------------------------------------------------------
 
 // ----------------------------------------------------------------------------
-// (1) Create a new account with an email and password.
+// (1) Create a new account with an email, password, holder name, and prefered
+//     language. Currently, the language preference is only used for
+//     translation, but it may be used to translate more UI elements in the
+//     future.
 //
 //     EXTERNAL SERVICE 1 (email validation)
 //          Undisclosed rate limits may apply, potentially preventing the
@@ -158,7 +164,7 @@ async function validEmail(res, email) {
  * @swagger
  * /auth/signup:
  *      post:
- *          summary: Create a new account with an email and password.
+ *          summary: Create a new account with an email, password, holder name, and prefered language.
  *          tags: [User]
  *          requestBody:
  *              required: true
@@ -166,11 +172,11 @@ async function validEmail(res, email) {
  *                  application/json:
  *                      schema:
  *                          type: object
- *                          required:
- *                              - email
- *                              - name
- *                              - password
+ *                          required: [username, email, name, password, language]
  *                          properties:
+ *                              username:
+ *                                  type: string
+ *                                  description: An unused username to associate with the new account
  *                              email:
  *                                  type: string
  *                                  description: A valid, unused email address to associate with the new account.
@@ -180,10 +186,15 @@ async function validEmail(res, email) {
  *                              password:
  *                                  type: string
  *                                  description: A valid password for accessing the new account.
+ *                              language:
+ *                                  type: string
+ *                                  description: The user's preferred language.
  *                          example:
+ *                              username: merefish
  *                              email: "example@example.com"
  *                              name: Ariel Person
  *                              password: a1b2c3A*
+ *                              language: en
  *          responses:
  *              200:
  *                  description: Account created.
@@ -192,7 +203,7 @@ async function validEmail(res, email) {
  *                          schema:
  *                              $ref: '#/components/schemas/Success'
  *              400:
- *                  description: The body is missing email, name, or password, the email or password has an invalid format, or the email is already in use. See the error message.
+ *                  description: The body is missing username, email, name, password, or language, the email or password has an invalid format, the language is invalid, or the email or username is already in use. See the error message.
  *                  content:
  *                      application/json:
  *                          schema:
@@ -205,51 +216,59 @@ async function validEmail(res, email) {
  *                              $ref: '#/components/schemas/Server Error'
  */
 router.post('/signup', async (req, res) => {
-    if (requireBodyParams(req, res, "email", "name", "password")) return;
+    if (requireBodyParams(req, res, "username", "email", "name", "password", "language"))
+        return;
 
     // Validate email address (EXTERNAL SERVICE 1)
-    if (!(await validEmail(res, req.body.email))) return;
+    if (!(await validEmail(res, req.body.email)))
+        return;
 
     // Validate password format
-    if (!validPass(res, req.body.password)) return;
+    if (!validPass(res, req.body.password))
+        return;
+
+    // Validate language preference
+    if (!validLanguage(res, req.body.language))
+        return; 
 
     // Collect parameters for new user record
     const salt = generateSalt();
     const values = [
-        req.body.email, req.body.name,
+        req.body.username, req.body.email, req.body.name,
         salt, hash(req.body.password, salt),
-        new Date()
+        new Date(), req.body.language
     ];
 
+    // Add new record for this account.
     dbConnection.query(
-        "INSERT INTO USERS (email, name, salt, password_hash, joined_time) VALUES (?);",
+        `INSERT INTO USERS (username, email, name, salt, password_hash, joined_time, lang)
+         VALUES (?);`,
         [values], (err, result) => {
             if (err) {
                 if (err.code == "ER_DUP_ENTRY")
-                    return clientError(res, "Email is already in use.");
+                    return clientError(res, "Username or email is already in use.");
                 return dbError(res, err);
             }
             
             // Attempt to establish session, but do not override success
             // response. This ensures the message that the account was created
             // is sent.
-            establishSession(result.insertId, req.body.name, req, null);
+            establishSession(req.body.username, req.body.name, req, null);
 
             return createSuccess(res, "Account succesfully created.");
     });
 });
 
 // ----------------------------------------------------------------------------
-// (2) Log in to an existing account with an email and password. Establish
-//     this session with the users uid (note that the session information is
-//     stored on the server and not sent in cookies).
+// (2) Log in to an existing account with a username and password. Establish
+//     this session with the username.
 //
 // URI: http://localhost:3001/auth/login
 /**
  * @swagger
  * /auth/login:
  *      post:
- *          summary: Log into an account with an email and password. Establish this session with the users uid (note that the session information is stored on the server and not sent in cookies).
+ *          summary: Log into an account with a username and password. Establish this session with the username.
  *          tags: [User]
  *          requestBody:
  *              required: true
@@ -257,18 +276,16 @@ router.post('/signup', async (req, res) => {
  *                  application/json:
  *                      schema:
  *                          type: object
- *                          required:
- *                              - email
- *                              - password
+ *                          required: [username, password]
  *                          properties:
- *                              email:
+ *                              username:
  *                                  type: string
- *                                  description: The email address of an existing account.
+ *                                  description: The username of an existing account.
  *                              password:
  *                                  type: string
  *                                  description: The password for the account.
  *                          example:
- *                              email: "example@example.com"
+ *                              username: merefish
  *                              password: a1b2c3A*
  *          responses:
  *              200:
@@ -278,7 +295,7 @@ router.post('/signup', async (req, res) => {
  *                          schema:
  *                              $ref: '#/components/schemas/Success'
  *              400:
- *                  description: The body is missing email or password, the email is not associated with an account, or the password is wrong. See the error message.
+ *                  description: The body is missing username or password, the username is not associated with an account, or the password is wrong. See the error message.
  *                  content:
  *                      application/json:
  *                          schema:
@@ -292,12 +309,12 @@ router.post('/signup', async (req, res) => {
  */
 router.post('/login', (req, res) => {
     // Validate request format
-    if (requireBodyParams(req, res, "email", "password"))
+    if (requireBodyParams(req, res, "username", "password"))
         return;
     
     dbConnection.query(
-        "SELECT uid, name, salt, password_hash FROM USERS WHERE email = ?;",
-        [req.body.email], (err, result) => {
+        "SELECT name, salt, password_hash FROM USERS WHERE username = ?;",
+        [req.body.username], (err, result) => {
             if (err)
                 return dbError(res, err);
             
@@ -305,17 +322,17 @@ router.post('/login', (req, res) => {
             // and password was wrong.
             if (result.length === 0) {
                 hash(req.body.password, errorSalt);
-                return clientError(res, "Email or password is incorrect.");
+                return clientError(res, "Username or password is incorrect.");
             }
 
             // Check whether password is correct. Avoid leaking which of email
             // and password is wrong.
             if (hash(req.body.password, result[0].salt).toString("hex") !==
                 result[0].password_hash.toString("hex"))
-                return clientError(res, "Email or password is incorrect.");
+                return clientError(res, "Username or password is incorrect.");
             
             // Attempt to establish session for the authenticated user.
-            return establishSession(result[0].uid, result[0].name, req, res);
+            return establishSession(req.body.username, result[0].name, req, res);
     });
 });
 
@@ -347,12 +364,12 @@ router.post('/login', (req, res) => {
  *                              $ref: '#/components/schemas/Server Error'
  */
 router.get('/logout', (req, res) => {
-    if (!req.session.uid)
+    if (!req.session.user)
         return success200(res, "Was not logged in.")
 
     // Mark the session as invalid and confirm that the session data and its
     // old ID are invalidated. Report to the user whether this was successful.
-    req.session.uid = null;
+    req.session.user = null;
     req.session.name = null;
     req.session.save(
         err => err ?

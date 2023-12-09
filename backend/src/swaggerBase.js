@@ -30,6 +30,12 @@
  *      name: Events
  *      description: Creating, accessing, modifying, and deleting events within a topic in a group.
  */
+/**
+ * @swagger
+ * tags:
+ *      name: Language
+ *      description: Accessing the list of language supported by the application and translated text between them.
+ */
 
 /**
  * @swagger
@@ -54,7 +60,7 @@
  *                      type: string
  *                      description: A description of what part of your request was invalid.
   *              example:
- *                  error: The "email" property is required in the body.
+ *                  error: The "X" property is required in the body.
  *          Unauthorized:
  *              type: object
  *              required:

@@ -154,6 +154,56 @@ async function validEmail(res, email) {
 //          creation of new accounts.
 //
 // URI: http://localhost:3001/auth/signup
+/**
+ * @swagger
+ * /auth/signup:
+ *      post:
+ *          summary: Create a new account with an email and password.
+ *          tags: [User]
+ *          requestBody:
+ *              required: true
+ *              content:
+ *                  application/json:
+ *                      schema:
+ *                          type: object
+ *                          required:
+ *                              - email
+ *                              - name
+ *                              - password
+ *                          properties:
+ *                              email:
+ *                                  type: string
+ *                                  description: A valid, unused email address to associate with the new account.
+ *                              name:
+ *                                  type: string 
+ *                                  description: The name to associate with the account. This is not used for authentication and is purely cosmetic.
+ *                              password:
+ *                                  type: string
+ *                                  description: A valid password for accessing the new account.
+ *                          example:
+ *                              email: "example@example.com"
+ *                              name: Ariel Person
+ *                              password: a1b2c3A*
+ *          responses:
+ *              200:
+ *                  description: Account created.
+ *                  content:
+ *                      application/json:
+ *                          schema:
+ *                              $ref: '#/components/schemas/Success'
+ *              400:
+ *                  description: The body is missing email, name, or password, the email or password has an invalid format, or the email is already in use. See the error message.
+ *                  content:
+ *                      application/json:
+ *                          schema:
+ *                              $ref: '#/components/schemas/Bad Request'
+ *              500:
+ *                  description: Internal server error.
+ *                  content:
+ *                      application/json:
+ *                          schema:
+ *                              $ref: '#/components/schemas/Server Error'
+ */
 router.post('/signup', async (req, res) => {
     if (requireBodyParams(req, res, "email", "name", "password")) return;
 
@@ -185,7 +235,7 @@ router.post('/signup', async (req, res) => {
             // is sent.
             establishSession(result.insertId, req.body.name, req, null);
 
-            return createSuccess(res, "Account succesfully created");
+            return createSuccess(res, "Account succesfully created.");
     });
 });
 
@@ -195,6 +245,51 @@ router.post('/signup', async (req, res) => {
 //     stored on the server and not sent in cookies).
 //
 // URI: http://localhost:3001/auth/login
+/**
+ * @swagger
+ * /auth/login:
+ *      post:
+ *          summary: Log into an account with an email and password. Establish this session with the users uid (note that the session information is stored on the server and not sent in cookies).
+ *          tags: [User]
+ *          requestBody:
+ *              required: true
+ *              content:
+ *                  application/json:
+ *                      schema:
+ *                          type: object
+ *                          required:
+ *                              - email
+ *                              - password
+ *                          properties:
+ *                              email:
+ *                                  type: string
+ *                                  description: The email address of an existing account.
+ *                              password:
+ *                                  type: string
+ *                                  description: The password for the account.
+ *                          example:
+ *                              email: "example@example.com"
+ *                              password: a1b2c3A*
+ *          responses:
+ *              200:
+ *                  description: Logged in succesfully.
+ *                  content:
+ *                      application/json:
+ *                          schema:
+ *                              $ref: '#/components/schemas/Success'
+ *              400:
+ *                  description: The body is missing email or password, the email is not associated with an account, or the password is wrong. See the error message.
+ *                  content:
+ *                      application/json:
+ *                          schema:
+ *                              $ref: '#/components/schemas/Bad Request'
+ *              500:
+ *                  description: Internal server error.
+ *                  content:
+ *                      application/json:
+ *                          schema:
+ *                              $ref: '#/components/schemas/Server Error'
+ */
 router.post('/login', (req, res) => {
     // Validate request format
     if (requireBodyParams(req, res, "email", "password"))
@@ -231,6 +326,26 @@ router.post('/login', (req, res) => {
 //     cookie.
 //
 // URI: http://localhost:3001/auth/logout
+/**
+ * @swagger
+ * /auth/logout:
+ *      get:
+ *          summary: Log out of the current account by ending the client's current session. Note that this does not log out of the account on other devices, as the current session is based only on the session ID sent in the client's cookie.
+ *          tags: [User]
+ *          responses:
+ *              200:
+ *                  description: Logged out in succesfully, or was not logged in (guaranteed to not be logged in now).
+ *                  content:
+ *                      application/json:
+ *                          schema:
+ *                              $ref: '#/components/schemas/Success'
+ *              500:
+ *                  description: Internal server error. The session may not have been terminated.
+ *                  content:
+ *                      application/json:
+ *                          schema:
+ *                              $ref: '#/components/schemas/Server Error'
+ */
 router.get('/logout', (req, res) => {
     if (!req.session.uid)
         return success200(res, "Was not logged in.")

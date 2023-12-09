@@ -14,10 +14,6 @@ Running the application:
 		(b) Execute "npm start" in the /frontend folder.
 	(4) To access the Swagger API Docs:
 		(a) Navigate to http://localhost:3001/docs in a browser.
-
-		Note:
-			If the backend is started with "npm start", the "Try it out" feature likely will not work for any endpoints because authentication is required for most services and Swagger does not support cookies.
-			TO BYPASS AUTHENTICATION WHEN COOKIES ARE UNAVAILABLE, run the backend with "npm start noAuth" instead of "npm start". This will still allow normal access with valid sessions, but invalid sessions will also be allowed and connect as the user with uid=1 (aGroupOwner@test.com). This does not provide the normal behavior and is expected only to be used for accessing the documentation.
 	(5) Using the frontend:
 		(a) Navigate to http://localhost:3000 in a browser.
 		(b) Sign up with an account with a valid email, name, and password, OR login with one of the following prebuilt accounts:
@@ -31,7 +27,7 @@ Running the application:
 			Topics
 			
 
-			Note that the length of input fields is restricted to 50 characters (~7-10 words) for event and topic names, 256 characters for user's names and separately for their emails, and 1000 characters (~140 words) for event and topic descriptions
+			Note that the length of input fields is restricted to 50 characters (~7-10 words) for event and topic names, 256 characters for user's names and separately for their emails, and 1000 characters (~140 words) for descriptions of events, topics, and logged points.
 
 
 Development platform:

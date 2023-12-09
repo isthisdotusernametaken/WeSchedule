@@ -13,12 +13,16 @@
 const PORT = 3001; // 3001 to avoid conflict with 3000 for frontend
 const MAX_SESSION_AGE = 1000 * 60 * 60 * 24 * 7 // 7 days before auto logout
 
-// ----------------------------------------------
-// Load necessary modules (express, cors, express-session)
+// Load necessary modules (express, cors, express-session, swagger-ui-express,
+// swagger-jsdoc)
 const express = require("express")
 const cors = require("cors")
 const session = require("express-session")
-const { handleErrorsBefore, handleErrorsAfter, unauthorizedError } = require("./src/routing")
+const {
+    handleErrorsBefore, handleErrorsAfter, unauthorizedError
+} = require("./src/routing")
+const swaggerUI = require("swagger-ui-express");
+const swaggerJSDoc = require("swagger-jsdoc");
 
 // ----------------------------------------------------------------------------
 // (A)  Create an express application using the above modules.
@@ -54,7 +58,23 @@ app.use(session({
 }))
 
 // ----------------------------------------------------------------------------
-// (C)  Add the route for the documentation.
+// (C)  Add the Swagger documentation.
+// ----------------------------------------------------------------------------
+app.use("/docs", swaggerUI.serve, swaggerUI.setup(swaggerJSDoc({
+    definition: {
+        openapi: "3.0.0",
+        info: {
+            title: "WeSchedule API",
+            version: require("./package.json").version,
+            description: "WeSchedule groups over HTTP with REST."
+        },
+        servers: [{ url: `http://localhost:${PORT}` }]
+    },
+    apis: ["./src/swaggerBase.js", "./src/services/*.js"]
+})));
+
+// ----------------------------------------------------------------------------
+// (D)  Add the routes for the API.
 // ----------------------------------------------------------------------------
 
 // No session required for this service. This service establishes sessions.
@@ -62,20 +82,11 @@ app.use("/auth", require("./src/services/auth"));
 
 // If valid session, continue; otherwise, skip next callbacks.
 const authenticatedUser = express.Router()
-authenticatedUser.use((req, res, next) => {
-    // eslint-disable-next-line
-    if (req.session.uid != null)
-        next();
-    else if (process.argv[2] === "noAuth") {
-        req.session.uid = 1;
-        next();
-    } else
-        unauthorizedError(res,
-            "Invalid session. You must log in with /auth/login."
-        );
-}
-    
+// eslint-disable-next-line
+authenticatedUser.use((req, res, next) => req.session.uid != null ? next() :
+    unauthorizedError(res, "Invalid session. You must log in with /auth/login.")
 );
+
 // Valid session required for these services
 // authenticatedUser.use("/users", require("./src/services/users"));
 // authenticatedUser.use("/groups", require("./src/services/groups"));
@@ -95,7 +106,7 @@ app.use((err, req, res, next) =>
     err ? handleErrorsAfter(req, res, err) : next());
 
 // ----------------------------------------------------------------------------
-// (D)  Listen to requests on specified port.
+// (E)  Listen to requests on specified port.
 // ----------------------------------------------------------------------------
 app.listen(PORT, () => {
     console.log("Express server is running and listening.");

@@ -1,6 +1,6 @@
 // ----------------------------------------------
 // TCSS 460: Autumn 2023
-// Backend REST Service Module
+// Backend REST Application
 // Authentication Utilities
 //
 // Author: Joshua Barbee

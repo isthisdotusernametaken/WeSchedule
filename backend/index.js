@@ -24,6 +24,7 @@ const {
 const swaggerUI = require("swagger-ui-express");
 const swaggerJSDoc = require("swagger-jsdoc");
 
+
 // ----------------------------------------------------------------------------
 // (A)  Create an express application using the above modules.
 //      Incoming requests' bodies are parsed as JSON unless specified otherwise
@@ -89,8 +90,8 @@ authenticatedUser.use((req, res, next) => req.session.user != null ? next() :
 
 // Valid session required for these services
 authenticatedUser.use("/users", require("./src/services/users"));
-// authenticatedUser.use("/groups", require("./src/services/groups"));
-// authenticatedUser.use("/groups/:group/users", require("./src/services/groupUsers"));
+authenticatedUser.use("/groups", require("./src/services/groups"));
+authenticatedUser.use("/groups/:group/users", require("./src/services/groupMembers"));
 // authenticatedUser.use("/groups/:group/topics", require("./src/services/topics"));
 // authenticatedUser.use("/groups/:group/topics/:topic/messages", require("./src/services/messages"));
 authenticatedUser.use("/language", require("./src/services/language").router);
@@ -101,7 +102,7 @@ authenticatedUser.use("/language", require("./src/services/language").router);
 app.use("/", authenticatedUser);
 
 
-
+// Catch errors missed by routing code.
 app.use((err, req, res, next) =>
     err ? handleErrorsAfter(req, res, err) : next());
 

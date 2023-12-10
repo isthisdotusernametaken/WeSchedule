@@ -1,6 +1,6 @@
 // ----------------------------------------------
 // TCSS 460: Autumn 2023
-// Backend REST Service Module
+// Backend REST Application
 // Service: /auth
 //
 // Author: Joshua Barbee
@@ -9,15 +9,13 @@
 // Create router for routes in this service
 const router = require("express").Router();
 
-// Establish a connection to the database
-const dbConnection = require("../dbConfig")
-
 // Utilities
 const {
     requireBodyParams,
     createSuccess, success200,
     clientError, dbError, serverError
 } = require("../routing");
+const { select, insert } = require("../sqlQuery");
 
 // Language validation from languages service
 const { validLanguage } = require("./language");
@@ -26,6 +24,11 @@ const { validLanguage } = require("./language");
 const {
     generateSalt, hash, validEmail, validPass
 } = require("../emailPassword");
+
+// Length validation
+const {
+    validUsernameLength, validNameLength, validEmailLength
+} = require("../lengths");
 
 
 // ----------------------------------------------------------------------------
@@ -45,7 +48,7 @@ const errorSalt = generateSalt();
 // valid session from the same device if the same cookie is used.
 // Only set response data if res is defined (so that this code can be reused
 // for signup and login).
-const establishSession = (user, name, req, res) => req.session.regenerate(err => {
+const establishSession = (user, name, admin, req, res) => req.session.regenerate(err => {
     // If unable to confirm session, do not authorize subsequent requests.
     if (err) {
         if (res)
@@ -55,6 +58,7 @@ const establishSession = (user, name, req, res) => req.session.regenerate(err =>
 
     req.session.user = user;
     req.session.name = name;
+    req.session.admin = admin
     if (res)
         success200(res, "Logged in succesfully.");
 });
@@ -72,6 +76,7 @@ function endSession(req, res) {
     // old ID are invalidated. Report to the user whether this was successful.
     req.session.user = null;
     req.session.name = null;
+    req.session.admin = null;
     req.session.save(err => {
         if (err) {
             if (res)
@@ -179,20 +184,22 @@ const sessionError = (req, res) => {
  *                              $ref: '#/components/schemas/Server Error'
  */
 router.post('/signup', async (req, res) => {
-    if (requireBodyParams(req, res, "username", "email", "name", "password", "language"))
-        return;
+    if (requireBodyParams(req, res,
+        "username", "email", "name", "password", "language")) return;
+
+    // Validate lengths
+    if (!validUsernameLength(res, req.body.username)) return;
+    if (!validNameLength(res, req.body.name)) return;
+    if (!validEmailLength(res, req.body.email)) return;
 
     // Validate email address (EXTERNAL SERVICE 1)
-    if (!(await validEmail(res, req.body.email)))
-        return;
+    if (!(await validEmail(res, req.body.email))) return;
 
     // Validate password format
-    if (!validPass(res, req.body.password))
-        return;
+    if (!validPass(res, req.body.password)) return;
 
     // Validate language preference
-    if (!validLanguage(res, req.body.language))
-        return;
+    if (!validLanguage(res, req.body.language)) return;
 
     // Collect parameters for new user record
     const salt = generateSalt();
@@ -203,10 +210,9 @@ router.post('/signup', async (req, res) => {
     ];
 
     // Add new record for this account.
-    dbConnection.query(
-        `INSERT INTO USERS (username, email, name, salt, password_hash, joined_time, lang)
-         VALUES (?);`,
-        [values], (err, result) => {
+    insert(
+        "USERS", "username, email, name, salt, password_hash, joined_time, lang",
+        values, (err, result) => {
             if (err) {
                 if (err.code == "ER_DUP_ENTRY")
                     return clientError(res, "Username or email is already in use.");
@@ -216,7 +222,7 @@ router.post('/signup', async (req, res) => {
             // Attempt to establish session, but do not override success
             // response. This ensures the message that the account was created
             // is sent.
-            establishSession(req.body.username, req.body.name, req, null);
+            establishSession(req.body.username, req.body.name, false, req, null);
 
             return createSuccess(res, "Account succesfully created.");
     });
@@ -275,9 +281,10 @@ router.post('/login', (req, res) => {
     if (requireBodyParams(req, res, "username", "password"))
         return;
     
-    dbConnection.query(
-        "SELECT name, salt, password_hash FROM USERS WHERE username = ?;",
-        [req.body.username], (err, result) => {
+    // Check if username exists, and on success, get salt and password hash
+    // and compare to hash for provided password.
+    select("USERS", "name, salt, password_hash, admin", "username", req.body.username,
+        (err, result) => {
             if (err)
                 return dbError(res, err);
             
@@ -295,8 +302,11 @@ router.post('/login', (req, res) => {
                 return clientError(res, "Username or password is incorrect.");
             
             // Attempt to establish session for the authenticated user.
-            return establishSession(req.body.username, result[0].name, req, res);
-    });
+            return establishSession(
+                req.body.username, result[0].name, !!result[0].admin, req, res
+            );
+        }
+    );
 });
 
 // ----------------------------------------------------------------------------

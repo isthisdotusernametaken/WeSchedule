@@ -1,6 +1,6 @@
 // ----------------------------------------------
 // TCSS 460: Autumn 2023
-// Backend REST Service Module
+// Backend REST Application
 // Swagger Categories and Schemas
 //
 // Author: Joshua Barbee
@@ -78,9 +78,19 @@
  *              properties:
  *                  success:
  *                      type: string
- *                      description: A message describing what operation was succesfully completed. The actually message can usually be ignored if all that must be known is whether the operation succeded with a 2xx status.
+ *                      description: A message describing what operation was succesfully completed. The actual message can usually be ignored if all that must be known is whether the operation succeded with a 2xx status.
  *              example:
- *                  success: X succesfully created/updated.
+ *                  success: X succesfully updated/deleted.
+ *          Created:
+ *              type: object
+ *              required:
+ *                  - success
+ *              properties:
+ *                  success:
+ *                      type: string
+ *                      description: A brief message describing what was created. The actual message can usually be ignored if all that must be known is whether the operation succeded with a 2xx status.
+ *              example:
+ *                  success: X succesfully updated/deleted.
  *          Bad Request:
  *              type: object
  *              required:
@@ -89,7 +99,7 @@
  *                  error:
  *                      type: string
  *                      description: A description of what part of your request was invalid.
-  *              example:
+ *              example:
  *                  error: The "X" property is required in the body.
  *          Unauthorized:
  *              type: object
@@ -101,6 +111,16 @@
  *                      description: A description of what authorization check the request failed.
  *              example:
  *                  error: Invalid session. You must log in with /auth/login or /auth/signup.
+ *          Not Found:
+ *              type: object
+ *              required:
+ *                  - error
+ *              properties:
+ *                  error:
+ *                      type: string
+ *                      description: A message stating that the resource could not be found.
+ *              example:
+ *                  error: The group does not exist, or you are not a member.
  *          Server Error:
  *              type: object
  *              required:

@@ -1,7 +1,7 @@
 // ----------------------------------------------
 // TCSS 460: Autumn 2023
 // Backend REST Application
-// Service: /template
+// Service: /groups/{gid}/users
 //
 // Author: Joshua Barbee
 // ----------------------------------------------
@@ -20,7 +20,7 @@ const router = require("express").Router();
 // ----------------------------------------------------------------------------
 // (1) Retrieve ... .
 //
-// URI: http://localhost:3001/template
+// URI: http://localhost:3001/groups/{gid}/users
 router.get('/', (req, res) => {
     
 });

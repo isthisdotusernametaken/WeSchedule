@@ -1,6 +1,6 @@
 // ----------------------------------------------
 // TCSS 460: Autumn 2023
-// Backend REST Service Module
+// Backend REST Application
 // Service: /users
 //
 // Author: Joshua Barbee
@@ -8,9 +8,6 @@
 
 // Create router for routes in this service
 const router = require("express").Router();
-
-// Establish a connection to the database
-const dbConnection = require("../dbConfig");
 
 // Utilities
 const {
@@ -28,7 +25,7 @@ const {
 const { validLanguage } = require("./language");
 
 // SQL update statement
-const { modularUpdate } = require("../sqlQuery");
+const { modularUpdate, select } = require("../sqlQuery");
 
 // Handle invalid sessions
 const { sessionError } = require("./auth");
@@ -100,48 +97,44 @@ const { sessionError } = require("./auth");
  *                          schema:
  *                              $ref: '#/components/schemas/Server Error'
  */
-router.get('/', (req, res) => {
-    // First, get this user's information.
-    dbConnection.query(
-        "SELECT email, joined_time, lang, admin FROM USERS WHERE username = ?;",
-        [req.session.user], (err, result) => {
-            if (err)
-                return dbError(res, err);
+router.get('/', (req, res) => select("USERS", "email, joined_time, lang, admin",
+    "username", req.session.user, (err, result) => { // First, get this user
+        if (err)
+            return dbError(res, err);
 
-            if (result.length === 0) // No rows matched the username (bad session).
-                return serverError(resm);
-            const myInfo = result[0];
+        if (result.length === 0) // No rows matched the username (bad session).
+            return serverError(resm);
+        const myInfo = result[0];
+        
+        // Next, if the Email header is specified, the user must be a
+        // global admin. If they are, the requested user's details will be
+        // returned; otherwise, the request will fail as unauthorized.
+        const email = req.get("Email");
+        if (email != undefined && `${email}`.trim() != "") {
+            if (!myInfo.admin)
+                return unauthorizedError(res,
+                    "Only global admins may use this header."
+                );
             
-            // Next, if the Email header is specified, the user must be a
-            // global admin. If they are, the requested user's details will be
-            // returned; otherwise, the request will fail as unauthorized.
-            const email = req.get("Email");
-            if (email != undefined && `${email}`.trim() != "") {
-                if (!myInfo.admin)
-                    return unauthorizedError(res,
-                        "Only global admins may use this header."
-                    );
-                
-                // Retrieve specified user's information from their email
-                dbConnection.query(
-                    "SELECT username, email, name, joined_time, lang FROM USERS WHERE email = ?;",
-                    [req.get("Email")], (err, result2) => {
-                        if (err)
-                            return dbError(res, err);
-                        
-                        if (result2.length === 0) // No users have this email.
-                            return clientError(res, "This email is not in use");
-            
-                        return getSuccess(res, result2[0]); // User exists
-                });
-            } else { // No Email header, so simply return this user's details
-                return getSuccess(res, {
-                    username: req.session.user, name: req.session.name,
-                    email: myInfo.email, joined_time: myInfo.joined_time, lang: myInfo.lang
-                });
-            }
-    });
-});
+            // Retrieve specified user's information from their email
+            select("USERS", "username, email, name, joined_time, lang",
+                "email", req.get("Email"), (err, result2) => {
+                    if (err)
+                        return dbError(res, err);
+                    
+                    if (result2.length === 0) // No users have this email.
+                        return clientError(res, "This email is not in use");
+        
+                    return getSuccess(res, result2[0]); // User exists
+            });
+        } else { // No Email header, so simply return this user's details
+            return getSuccess(res, {
+                username: req.session.user, name: req.session.name,
+                email: myInfo.email, joined_time: myInfo.joined_time, lang: myInfo.lang
+            });
+        }
+    }
+));
 
 // ----------------------------------------------------------------------------
 // (2) Update the password, email, name, and/or language of the current user.
@@ -191,6 +184,12 @@ router.get('/', (req, res) => {
  *                      application/json:
  *                          schema:
  *                              $ref: '#/components/schemas/Bad Request'
+ *              401:
+ *                  description: Unauthorized. Not logged in, or Email header used by non-admin.
+ *                  content:
+ *                      application/json:
+ *                          schema:
+ *                              $ref: '#/components/schemas/Unauthorized'
  *              500:
  *                  description: Internal server error.
  *                  content:
@@ -199,36 +198,37 @@ router.get('/', (req, res) => {
  *                              $ref: '#/components/schemas/Server Error'
  */
 router.put('/', async (req, res) => {
-    if (requireSomeBodyParam(req, res, "password", "email", "name", "language"))
-        return;
+    if (requireSomeBodyParam(req, res,
+        "password", "email", "name", "language")) return;
 
     const values = {}; // The columns to update, and their new values
 
     // Validate email address (EXTERNAL SERVICE 1)
     if (paramGiven(req.body.email)) {
-        if (!(await validEmail(res, req.body.email)))
-            return;
+        if (!(await validEmail(res, req.body.email))) return;
+        if (!validEmailLength(res, req.body.email)) return;
 
         values.email = req.body.email;
     }
 
     // Validate password format and generate salt and hash
     if (paramGiven(req.body.password)) {
-        if (!validPass(res, req.body.password))
-            return;
+        if (!validPass(res, req.body.password)) return;
 
         values.salt = generateSalt();
         values.password_hash = hash(req.body.password, values.salt);
     }
     
     // Add name if given
-    if (paramGiven(req.body.name))
+    if (paramGiven(req.body.name)) {
+        if (!validNameLength(res, req.body.name)) return;
+
         values.name = req.body.name;
+    }
 
     // Validate language preference
     if (paramGiven(req.body.language)) {
-        if (!validLanguage(res, req.body.language))
-            return;
+        if (!validLanguage(res, req.body.language)) return;
 
         values.lang = req.body.language;
     }

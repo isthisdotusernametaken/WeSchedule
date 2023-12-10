@@ -1,6 +1,6 @@
 // ----------------------------------------------
 // TCSS 460: Autumn 2023
-// Backend REST Service Module
+// Backend REST Application
 // Routing Utilities
 //
 // Author: Joshua Barbee
@@ -77,10 +77,6 @@ const requireHeaders = (req, res, ...headers) =>
 const successWithMsg = (res, status, msg) =>
     res.status(status).json({success: msg});
 
-// Return the specified file with the status code 200 OK.
-const getFileSuccess = (res, filename, rootDir) =>
-    res.status(200).sendFile(filename, {root: rootDir});
-
 // Return the specified data as a JSON object with the status code 200 OK.
 // This supports GET requests and other requests that return data.
 const getSuccess = (res, output) => res.status(200).json(output);
@@ -111,6 +107,10 @@ const clientError = (res, msg) => error(res, 400, msg);
 // Report the specified error with a 400 Bad Request status code to indicate
 // client error.
 const unauthorizedError = (res, msg) => error(res, 401, msg);
+
+// Report the specified error with a 404 Not Found status code to indicate
+// the resource cannot be accessed.
+const notFoundError = (res, msg) => error(res, 404, msg);
 
 // Report the specified error with a 500 Internal Server Error status code to
 // indicate server error.
@@ -156,7 +156,7 @@ const handleErrorsAfter = (req, res, err) => unknownError(res, err);
 
 module.exports = {
     paramGiven, requireBodyParams, requireSomeBodyParam, requireHeaders,
-    getFileSuccess, getSuccess, createSuccess, success200,
-    clientError, unauthorizedError, serverErrorNoLog, serverError, dbError,
+    getSuccess, createSuccess, success200,
+    clientError, unauthorizedError, notFoundError, serverErrorNoLog, serverError, dbError,
     handleErrorsBefore, handleErrorsAfter
 };

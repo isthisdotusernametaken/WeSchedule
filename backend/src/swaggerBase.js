@@ -9,20 +9,44 @@
 /**
  * @swagger
  * tags:
- *      name: User
- *      description: Creating, logging into, retrieving, and modifying accounts.
+ *      name: Authentication
+ *      description: Creating, logging into, and logging out of accounts.
  */
 /**
  * @swagger
  * tags:
- *      name: Group
+ *      name: Users
+ *      description: Retrieving and modifying account data.
+ */
+/**
+ * @swagger
+ * tags:
+ *      name: Groups
  *      description: Creating, accessing, modifying, and deleting groups.
  */
 /**
  * @swagger
  * tags:
- *      name: Messaging
+ *      name: Group Members
+ *      description: Adding/removing group members and modifying member permissions.
+ */
+/**
+ * @swagger
+ * tags:
+ *      name: Topics
+ *      description: Creating, accessing, modifying, and deleting topics in a group.
+ */
+/**
+ * @swagger
+ * tags:
+ *      name: Messages
  *      description: Creating, accessing, modifying, and deleting messages within a topic in a group.
+ */
+/**
+ * @swagger
+ * tags:
+ *      name: Language
+ *      description: Accessing the list of language supported by the application and translated text between them.
  */
 /**
  * @swagger
@@ -33,8 +57,14 @@
 /**
  * @swagger
  * tags:
- *      name: Language
- *      description: Accessing the list of language supported by the application and translated text between them.
+ *      name: Group Log
+ *      description: Creating, accessing, and deleting logged history points in a group.
+ */
+/**
+ * @swagger
+ * tags:
+ *      name: Group Statistics
+ *      description: Generating statistics that describe the group and possibly storing the current statistics as a logged history point.
  */
 
 /**

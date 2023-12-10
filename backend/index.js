@@ -78,7 +78,7 @@ app.use("/docs", swaggerUI.serve, swaggerUI.setup(swaggerJSDoc({
 // ----------------------------------------------------------------------------
 
 // No session required for this service. This service establishes sessions.
-app.use("/auth", require("./src/services/auth"));
+app.use("/auth", require("./src/services/auth").router);
 
 // If valid session, continue; otherwise, skip next callbacks.
 const authenticatedUser = express.Router()
@@ -88,7 +88,7 @@ authenticatedUser.use((req, res, next) => req.session.user != null ? next() :
 );
 
 // Valid session required for these services
-// authenticatedUser.use("/users", require("./src/services/users"));
+authenticatedUser.use("/users", require("./src/services/users"));
 // authenticatedUser.use("/groups", require("./src/services/groups"));
 // authenticatedUser.use("/groups/:group/users", require("./src/services/groupUsers"));
 // authenticatedUser.use("/groups/:group/topics", require("./src/services/topics"));

@@ -12,66 +12,25 @@ const router = require("express").Router();
 // Establish a connection to the database
 const dbConnection = require("../dbConfig")
 
-// Cryptographic hashing for password
-const crypto = require("crypto");
-
-// Axios for making external requests
-const axios = require("axios");
-
 // Utilities
 const {
     requireBodyParams,
     createSuccess, success200,
     clientError, dbError, serverError
 } = require("../routing");
+
+// Language validation from languages service
 const { validLanguage } = require("./language");
 
-// Languages from translation service
-const languages = require("./language").languages;
+// Email and password validation
+const {
+    generateSalt, hash, validEmail, validPass
+} = require("../emailPassword");
 
 
 // ----------------------------------------------------------------------------
-// (A)  Configuration details.
+// (A)  Define data and behavior used by routes below.
 // ----------------------------------------------------------------------------
-
-// To avoid requiring ALL accounts to reset their passwords, these parameters
-// should not be changed if at all possible.
-// The salt length and hash length must match those of the database.
-const HASH_ITERATIONS = 100000;
-const SALT_LENGTH = 16;
-const HASH_LENGTH = 64;
-const HASH_ALGORITHM = "sha512";
-
-// External email validation service
-const emailValidationUrl = "http://api.eva.pingutil.com/email";
-
-// Password format, constructed for easy detection of the invalid feature.
-const PASS_LENGTH_RANGE = Object.freeze([8, 30]);
-const PASS_LENGTH = pass => pass.length >= PASS_LENGTH_RANGE[0] && pass.length <= PASS_LENGTH_RANGE[1];
-const PASS_UPPERCASE = /[A-Z]/;
-const PASS_LOWERCASE = /[a-z]/;
-const PASS_NUMBER = /\d/;
-const PASS_SPECIAL = /[!@#\\$%\\^&*()_+=-]/;
-const PASS_DESC =
-    "The password must have at least one of each of the following character " +
-    "types: uppercase letters (A-Z), lowercase letters (a-z), numbers (0-9) " +
-    "and special characters (!@#$%^&*()_+=-). The password must be between " +
-    `${PASS_LENGTH_RANGE[0]} and ${PASS_LENGTH_RANGE[1]} characters.`;
-
-
-// ----------------------------------------------------------------------------
-// (B)  Define data and behavior used by routes below.
-// ----------------------------------------------------------------------------
-
-// Salt from CSPRNG as a hex string.
-const generateSalt = () => crypto.randomBytes(SALT_LENGTH);
-
-// Hash given password and salt with the server's hashing configuration. Return
-// the hash as a hex string.
-const hash = (pass, salt) =>
-    crypto.pbkdf2Sync(
-        pass, salt, HASH_ITERATIONS, HASH_LENGTH, HASH_ALGORITHM
-    );
 
 // A salt to use if the email is incorrect. This avoids information leakage
 // about whether a user exists via the login process.
@@ -81,30 +40,6 @@ const hash = (pass, salt) =>
 // constraint with a number of accounts that can be associated with a single
 // email and a requirement that new users validate email address ownership.
 const errorSalt = generateSalt();
-
-function validPass(res, pass) {
-    if (!PASS_LENGTH(pass)) {
-        clientError(res, "Invalid password length. " + PASS_DESC);
-        return false;
-    }
-    if (!PASS_UPPERCASE.test(pass)) {
-        clientError(res, "Password missing uppercase letter. " + PASS_DESC);
-        return false;
-    }
-    if (!PASS_LOWERCASE.test(pass)) {
-        clientError(res, "Password missing lowercase letter. " + PASS_DESC);
-        return false;
-    }
-    if (!PASS_NUMBER.test(pass)) {
-        clientError(res, "Password missing number. " + PASS_DESC);
-        return false;
-    }
-    if (!PASS_SPECIAL.test(pass)) {
-        clientError(res, "Password missing special character. " + PASS_DESC);
-        return false;
-    }
-    return true; // Valid password
-}
 
 // Generate/regenerate the client's validated session. This overwrites an old
 // valid session from the same device if the same cookie is used.
@@ -122,36 +57,64 @@ const establishSession = (user, name, req, res) => req.session.regenerate(err =>
     req.session.name = name;
     if (res)
         success200(res, "Logged in succesfully.");
-})
+});
 
-// Use an external service to determine whether the email is valid. This
-// currently only checks syntax because UW emails are detected as not
-// deliverable, but a simple change to the line marked below can require the
-// email address to be deliverable to be accepted.
-async function validEmail(res, email) {
-    try {  
-        const data = (await axios.get(emailValidationUrl, {
-            params: { email: email }
-        })).data;
-
-        if (data.data.valid_syntax) // Can add && data.data.deliverable to be strict
-            return true;
-
-        clientError(res, "Invalid email address.");
-        return false;
-    } catch (err) {
-        serverError(res, err, "Email could not be validated. Please report to admin.");
-        return false;
+// Attempt to terminate the user's current session and return whether this was
+// successful. On failure, if res is defined, set response data.
+function endSession(req, res) {
+    if (!req.session.user) {
+        if (res)
+            success200(res, "Was not logged in.");
+        return true; // Definitely not logged in
     }
+
+    // Mark the session as invalid and confirm that the session data and its
+    // old ID are invalidated. Report to the user whether this was successful.
+    req.session.user = null;
+    req.session.name = null;
+    req.session.save(err => {
+        if (err) {
+            if (res)
+                serverError(res, err, "Logout may have failed.");
+            return false; // Possibly still logged in
+        }
+        req.session.regenerate(err2 => {
+            if (err2) {
+                if (res)
+                    serverError(res, err2, "Logout may have failed.")
+                return false; // Possibly still logged in
+            }
+
+            success200(res, "Logged out successfully.")
+            return true; // Definitely logged out
+        })
+    });
+}
+
+// Report the session was invalidated somehow (the username is invalid) with a
+// 500 Internal Server Error status code. Because usernames are not allowed to
+// be changed, this should not occur outside of a user being manually deleted
+// from the database or having their username changed by a global admin while
+// they have an active session.
+const sessionError = (req, res) => {
+    if (endSession(req, undefined)) // Terminate session
+        console.error(`Session termination error for user ${req.session.user}`);
+    
+    const errorMsg = `Bad session for user ${req.session.user}`;
+    serverError(res, errorMsg, errorMsg);
 }
 
 // ----------------------------------------------------------------------------
-// (C)  Define routes.
+// (B)  Define routes.
 // ----------------------------------------------------------------------------
 
 // ----------------------------------------------------------------------------
 // (1) Create a new account with an email, password, holder name, and prefered
-//     language. Currently, the language preference is only used for
+//     language. An attempt will also be made to establish a session, but this
+//     may not be successful; the user must then explicitly use the /auth/login
+//     endpoint.
+// 
+//     Currently, the language preference is only used for
 //     translation, but it may be used to translate more UI elements in the
 //     future.
 //
@@ -164,8 +127,8 @@ async function validEmail(res, email) {
  * @swagger
  * /auth/signup:
  *      post:
- *          summary: Create a new account with an email, password, holder name, and prefered language.
- *          tags: [User]
+ *          summary: Create a new account with an email, password, holder name, and prefered language. An attempt will also be made to establish a session, but this may not be successful; the user must then explicitly use the /auth/login endpoint.
+ *          tags: [Authentication]
  *          requestBody:
  *              required: true
  *              content:
@@ -229,7 +192,7 @@ router.post('/signup', async (req, res) => {
 
     // Validate language preference
     if (!validLanguage(res, req.body.language))
-        return; 
+        return;
 
     // Collect parameters for new user record
     const salt = generateSalt();
@@ -269,7 +232,7 @@ router.post('/signup', async (req, res) => {
  * /auth/login:
  *      post:
  *          summary: Log into an account with a username and password. Establish this session with the username.
- *          tags: [User]
+ *          tags: [Authentication]
  *          requestBody:
  *              required: true
  *              content:
@@ -348,7 +311,7 @@ router.post('/login', (req, res) => {
  * /auth/logout:
  *      get:
  *          summary: Log out of the current account by ending the client's current session. Note that this does not log out of the account on other devices, as the current session is based only on the session ID sent in the client's cookie.
- *          tags: [User]
+ *          tags: [Authentication]
  *          responses:
  *              200:
  *                  description: Logged out in succesfully, or was not logged in (guaranteed to not be logged in now).
@@ -363,24 +326,9 @@ router.post('/login', (req, res) => {
  *                          schema:
  *                              $ref: '#/components/schemas/Server Error'
  */
-router.get('/logout', (req, res) => {
-    if (!req.session.user)
-        return success200(res, "Was not logged in.")
-
-    // Mark the session as invalid and confirm that the session data and its
-    // old ID are invalidated. Report to the user whether this was successful.
-    req.session.user = null;
-    req.session.name = null;
-    req.session.save(
-        err => err ?
-            serverError(res, err, "Logout may have failed.") : 
-            req.session.regenerate(
-                err2 => err2 ?
-                    serverError(res, err2, "Logout may have failed.") :
-                    success200(res, "Logged out successfully.")
-            )
-    );
-});
+router.get('/logout', endSession);
 
 
-module.exports = router;
+// Allow session termination from /auth/logout for other services when the
+// session is determined to be invalid.
+module.exports = { router, sessionError };

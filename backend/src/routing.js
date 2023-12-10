@@ -13,14 +13,19 @@
 // (A)  Utility functions to simplify routing code.
 // ----------------------------------------------------------------------------
 
+// Determine whether a nonempty value was provided.
+const paramGiven = param => param != undefined && `${param}`.trim() !== "";
+
 // If the the specified property is not in the request body or is blank, send a
 // descriptive error and return true (so that the caller can immediately exit);
 // otherwise, return false to signal that the caller should not exit (the
-// property exists and is nonempty).
+// property exists and is nonempty). Set the response data on failure if res is
+// defined.
 const requireBodyParam = (req, res, param) => {
     // eslint-disable-next-line
-    if (req.body[param] == undefined || `${req.body[param]}`.trim() === "") {
-        clientError(res, `The "${param}" property is required in the body.`);
+    if (!paramGiven(req.body[param])) {
+        if (res)
+            clientError(res, `The "${param}" property is required in the body.`);
         return true; // Exit
     } else {
         return false; // Continue
@@ -32,10 +37,23 @@ const requireBodyParam = (req, res, param) => {
 const requireBodyParams = (req, res, ...params) =>
     params.some(param => requireBodyParam(req, res, param));
 
+// Require at least one of the specified properties in the request body, as for
+// requireBodyParam.
+const requireSomeBodyParam = (req, res, ...params) => {
+    const hasNone = params.every(param => requireBodyParam(req, null, param));
+
+    if (hasNone) {
+        clientError(res, `The body requires at least one of ${params.join(",")}.`);
+        return true;
+    }
+    return false;
+}
+    
+
 // Require the specified request header, as for requireBodyParam.
 const requireHeader = (req, res, header) => {
     // eslint-disable-next-line
-    if (req.get(header) == undefined || `${req.get(header)}`.trim() === "") {
+    if (!paramGiven(req.get(header))) {
         clientError(res, `The "${header}" header is required.`);
         return true; // Exit
     } else {
@@ -98,7 +116,6 @@ const unauthorizedError = (res, msg) => error(res, 401, msg);
 // indicate server error.
 const serverErrorNoLog = (res, msg) => error(res, 500, msg);
 
-
 // Report the specified error with a 500 Internal Server Error status code to
 // indicate server error. Log the error to the console for easier diagnosis.
 const serverError = (res, err, msg) => {
@@ -119,7 +136,7 @@ const unknownError = (res, err) =>
 // ----------------------------------------------------------------------------
 // (D)  Handle all uncaught errors from external modules and custom code to
 //      (1) reduce checking in the processing code for routes and to (2) ensure
-//          a consistent error format.
+//      a consistent error format.
 // ----------------------------------------------------------------------------
 
 // Return an error message for failures before routing code.
@@ -138,7 +155,7 @@ const handleErrorsAfter = (req, res, err) => unknownError(res, err);
 
 
 module.exports = {
-    requireBodyParams, requireHeaders,
+    paramGiven, requireBodyParams, requireSomeBodyParam, requireHeaders,
     getFileSuccess, getSuccess, createSuccess, success200,
     clientError, unauthorizedError, serverErrorNoLog, serverError, dbError,
     handleErrorsBefore, handleErrorsAfter

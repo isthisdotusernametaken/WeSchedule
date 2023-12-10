@@ -63,7 +63,9 @@ Files
 				stats.js (/groups/:group/stats)
 				visualization.js (/groups/:group/visualization)
 			dbConfig.js (connecting to MySQL DB)
+			emailPassword.js (validating emails with external service and passwords with regex)
 			routing.js (utilities used in routing code)
+			swaggerBase.js (Swagger schemas and tags)
 		index.js (custom code entry point)
 		weschedule_db.sql
 	frontend

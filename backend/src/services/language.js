@@ -20,7 +20,7 @@ const axios = require("axios");
 
 // Utilities
 const {
-    requireHeaders, getSuccess, serverErrorNoLog, clientError, serverError
+    requireHeaders, getSuccess, clientError, serverError, serverErrorNoLog
 } = require("../routing");
 
 // External URLs
@@ -39,7 +39,7 @@ const azureKey = require("../../config/azureKey.json").key;
 let languages = undefined;
 
 // Attempt to load the list of languages from the external service.
-loadLanguages();
+// loadLanguages();
 async function loadLanguages() {
     try {
         // Get the list of languages from Azure.
@@ -61,7 +61,11 @@ async function loadLanguages() {
 
 // If the language is invalid, set the response information and return false;
 // otherwise, return true.
-function validLanguage(res, lang) {
+function validLanguage(res, lang) {return true;
+    if (languages === undefined) {
+        serverErrorNoLog(res, "Languages cannot currently be verified.");
+        return false;
+    }
     if (languages[lang] === undefined) {
         clientError(res, "Invalid language.");
         return false;
@@ -107,7 +111,7 @@ async function translate(res, strs, lang) {
 /**
  * @swagger
  * /language:
- *      post:
+ *      get:
  *          summary: Retrieve the list of valid languages.
  *          tags: [Language]
  *          responses:

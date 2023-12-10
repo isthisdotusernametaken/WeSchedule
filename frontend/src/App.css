@@ -1,0 +1,20 @@
+.navbar-brand {
+  color: aqua;
+  background: 0;
+  border: 0;
+}
+
+.nav-item {
+  margin: 0 0.5rem;
+  display: flex;
+}
+
+.material-symbols-outlined {
+  color: aliceblue;
+  font-variation-settings:
+  'FILL' 1,
+  'wght' 300,
+  'GRAD' 0,
+  'opsz' 100;
+  background-color: rgba(0, 255, 255, 0.6);
+}

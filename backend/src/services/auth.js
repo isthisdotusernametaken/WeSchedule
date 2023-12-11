@@ -214,7 +214,7 @@ router.post('/signup', async (req, res) => {
         "USERS", "username, email, name, salt, password_hash, joined_time, lang",
         values, (err, result) => {
             if (err) {
-                if (err.code == "ER_DUP_ENTRY")
+                if (err.code === "ER_DUP_ENTRY")
                     return clientError(res, "Username or email is already in use.");
                 return dbError(res, err);
             }

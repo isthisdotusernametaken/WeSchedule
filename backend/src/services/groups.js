@@ -11,16 +11,18 @@ const router = require("express").Router();
 
 // Database access
 const {
-    select, selectJoin, toBool, insert, modularUpdate, deleteData
+    select, selectJoin, toBool, insert, update, deleteData, updateSuccess
 } = require("../sqlQuery");
 
 // Utilities
 const {
     paramGiven, requireSomeBodyParam,
     success200, getSuccess, createSuccess,
-    dbError, requireBodyParams, notFoundError, clientError
+    dbError, requireBodyParams, clientError, notExistsOrNoAccess
 } = require("../routing");
 const { validGroupNameLength } = require("../lengths");
+const { addGroupMember } = require("./groupMembers");
+const { addTopic } = require("./topics");
 
 
 // ----------------------------------------------------------------------------
@@ -35,6 +37,9 @@ const { validGroupNameLength } = require("../lengths");
  *              type: object
  *              required: [name, owner_username, creation_time]
  *              properties:
+ *                  gid:
+ *                      type: integer
+ *                      description: The group's ID
  *                  name:
  *                      type: string
  *                      description: The group's name
@@ -58,6 +63,7 @@ const { validGroupNameLength } = require("../lengths");
  *                  joined_time: 2023-12-09T17:27:56.000Z
  *                  local_admin: false
  */
+
 
 // ----------------------------------------------------------------------------
 // (B)  Define routes.
@@ -119,7 +125,7 @@ router.get('/', (req, res) =>  req.session.admin ?
  * @swagger
  * /groups:
  *      post:
- *          summary: Create a new group owned by the current user and labeled with the provided name.
+ *          summary: (Composition 1) Create a new group owned by the current user and labeled with the provided name. COMPOSITION - After making the group, call the group member service to add the owner as a member and call the topic service to make a General topic, which allows the topic member service to be called to add the owner as a topic member).
  *          tags: [Groups]
  *          requestBody:
  *              required: true
@@ -170,9 +176,16 @@ router.post('/', (req, res) => {
             if (err)
                 return dbError(res, err);
             
-            // ADD GROUP MEMBER, TOPIC, AND TOPIC MEMBER
-            
-            createSuccess(res, "Group created.")
+            // Add owner as member of new group (call WS-4)
+            addGroupMember(
+                true, req, res, result.insertId, req.session.user, true,
+                // Add General topic (call WS-5)
+                () => addTopic(
+                    true, res, result.insertId, "General", "", () =>
+                    // Add owner as member of General topic (call WS-6)
+                    createSuccess(res, "Group created.")
+                ) 
+            )
         }
     );
 });
@@ -230,7 +243,7 @@ router.get('/:gid', (req, res) => req.session.admin ?
                 return dbError(res, err);
             
             if (result.length === 0) // No row matched gid
-                return notFoundError(res, "This group does not exist.");
+                return notExistsOrNoAccess(req, res, "Group");
             
             getSuccess(res, result[0])
         }
@@ -244,9 +257,7 @@ router.get('/:gid', (req, res) => req.session.admin ?
                 return dbError(res, err);
             
             if (result.length === 0) // Bad gid or not a member
-                return notFoundError(res,
-                    "This group does not exist, or you are not a member."
-                );
+                return notExistsOrNoAccess(req, res, "Group");
             
             getSuccess(res, toBool(result, "local_admin")[0])
         }
@@ -337,7 +348,7 @@ router.put('/:gid', (req, res) => {
 
     // Update the specified values if the group exists and the current user is
     // the owner (or is a global admin).
-    modularUpdate(
+    update(
         "GROUPS", values,
         req.session.admin ? "gid" : ["gid", "owner_username"],
         req.session.admin ? req.params.gid : [req.params.gid, req.session.user],
@@ -349,15 +360,9 @@ router.put('/:gid', (req, res) => {
             }
 
             if (result.affectedRows === 0) // No record matched both gid and owner
-                return notFoundError(res,
-                    "This group does not exist" +
-                        (req.session.admin ? "." : ", or you are not the owner.")
-                );
+                return notExistsOrNoAccess(req, res, "Group");
             
-            if (result.changedRows === 0) // Success, but same values given
-                return success200(res, "Information unchanged.");
-
-            return success200(res, "Information succesfully updated.");
+            updateSuccess(res, result); // Updated
         }
     );
 });
@@ -407,8 +412,8 @@ router.put('/:gid', (req, res) => {
  *                              $ref: '#/components/schemas/Server Error'
  */
 router.delete('/:gid', (req, res) => {
-    // Update the specified values if the group exists and the current user is
-    // the owner (or is a global admin).
+    // Delete the group if the group exists and the current user is the owner
+    // (or is a global admin).
     deleteData(
         "GROUPS",
         req.session.admin ? "gid" : ["gid", "owner_username"],
@@ -418,10 +423,7 @@ router.delete('/:gid', (req, res) => {
                 return dbError(res, err);
 
             if (result.affectedRows === 0) // No record matched both gid and owner
-                return notFoundError(res,
-                    "This group does not exist" +
-                        (req.session.admin ? "." : ", or you are not the owner.")
-                );
+                return notExistsOrNoAccess(req, res, "Group");
 
             return success200(res, "Group succesfully deleted.");
         }

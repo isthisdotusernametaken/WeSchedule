@@ -25,7 +25,7 @@ const {
 const { validLanguage } = require("./language");
 
 // SQL update statement
-const { modularUpdate, select } = require("../sqlQuery");
+const { update, select, updateSuccess } = require("../sqlQuery");
 
 // Handle invalid sessions
 const { sessionError } = require("./auth");
@@ -61,7 +61,7 @@ const { sessionError } = require("./auth");
  *                      application/json:
  *                          schema:
  *                              type: object
- *                              required: [username, name, email, joined_time, lang]
+ *                              required: [name, email, joined_time, lang]
  *                              properties:
  *                                  username:
  *                                      type: string
@@ -97,44 +97,40 @@ const { sessionError } = require("./auth");
  *                          schema:
  *                              $ref: '#/components/schemas/Server Error'
  */
-router.get('/', (req, res) => select("USERS", "email, joined_time, lang, admin",
-    "username", req.session.user, (err, result) => { // First, get this user
-        if (err)
-            return dbError(res, err);
-
-        if (result.length === 0) // No rows matched the username (bad session).
-            return serverError(resm);
-        const myInfo = result[0];
+router.get('/', (req, res) => {
+    // If the Email header is specified, the user must be a
+    // global admin. If they are, the requested user's details will be
+    // returned; otherwise, the request will fail as unauthorized.
+    const email = req.get("Email");
+    if (paramGiven(email)) {
+        if (!req.session.admin)
+            return unauthorizedError(res,
+                "Only global admins may use this header."
+            );
         
-        // Next, if the Email header is specified, the user must be a
-        // global admin. If they are, the requested user's details will be
-        // returned; otherwise, the request will fail as unauthorized.
-        const email = req.get("Email");
-        if (email != undefined && `${email}`.trim() != "") {
-            if (!myInfo.admin)
-                return unauthorizedError(res,
-                    "Only global admins may use this header."
-                );
-            
-            // Retrieve specified user's information from their email
-            select("USERS", "username, email, name, joined_time, lang",
-                "email", req.get("Email"), (err, result2) => {
-                    if (err)
-                        return dbError(res, err);
-                    
-                    if (result2.length === 0) // No users have this email.
-                        return clientError(res, "This email is not in use");
-        
-                    return getSuccess(res, result2[0]); // User exists
-            });
-        } else { // No Email header, so simply return this user's details
-            return getSuccess(res, {
-                username: req.session.user, name: req.session.name,
-                email: myInfo.email, joined_time: myInfo.joined_time, lang: myInfo.lang
-            });
-        }
+        // Retrieve specified user's information from their email
+        return select(
+            "USERS", "username, email, name, joined_time, lang",
+            "email", email, (err, result) =>
+                err ?
+                    dbError(res, err) :
+                result.length === 0 ?
+                    clientError(res, "This email is not in use") :
+                getSuccess(res, result[0]) // User exists
+        );
     }
-));
+
+    // No Email header. Get the logged in user's details.
+    select(
+        "USERS", "name, email, joined_time, lang, admin",
+        "username", req.session.user, (err, result) =>
+            err ?
+                dbError(res, err) :
+            result.length === 0 ? // No rows matched the username (bad session).
+                serverError(res) :
+            getSuccess(res, result)
+    );
+});
 
 // ----------------------------------------------------------------------------
 // (2) Update the password, email, name, and/or language of the current user.
@@ -234,9 +230,9 @@ router.put('/', async (req, res) => {
     }
 
     // Attempt to update the specified values.
-    modularUpdate("USERS", values, "username", req.session.user, (err, result) => {
+    update("USERS", values, "username", req.session.user, (err, result) => {
         if (err) {
-            if (err.code == "ER_DUP_ENTRY")
+            if (err.code === "ER_DUP_ENTRY")
                 return clientError(res, "Email is already in use.");
             return dbError(res, err);
         }
@@ -247,10 +243,7 @@ router.put('/', async (req, res) => {
         if (paramGiven(req.body.name)) // Update session's name preference
             req.session.name = req.body.name;
         
-        if (result.changedRows === 0) // Success, but same values given
-            return success200(res, "Information unchanged.");
-
-        return success200(res, "Information succesfully updated.");
+        updateSuccess(res, result); // Updated
     })
 });
 

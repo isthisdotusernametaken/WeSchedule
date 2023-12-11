@@ -112,7 +112,7 @@ async function translate(res, strs, lang) {
  * @swagger
  * /language:
  *      get:
- *          summary: Retrieve the list of valid languages.
+ *          summary: (External Service 2 - languages allowed for translation with Azure) Retrieve the list of valid languages.
  *          tags: [Language]
  *          responses:
  *              200:
@@ -153,7 +153,7 @@ router.get('/', (req, res) => languages ?
  * @swagger
  * /language/translate/:
  *      post:
- *          summary: Translate the given array of strings to the specified language.
+ *          summary: (External Service 2 - translation with Azure) Translate the given array of strings to the specified language.
  *          tags: [Language]
  *          parameters:
  *              - in: header
@@ -229,4 +229,4 @@ router.post('/translate', async (req, res) => {
 // (without HTTP) of a custom service can count as part of a service
 // composition, and this service is composed with the /users service for a
 // route in /groups/{group}/topics/{topic}/messages
-module.exports = Object.freeze({ router, languages, validLanguage, translate });
+module.exports = { router, languages, validLanguage, translate };

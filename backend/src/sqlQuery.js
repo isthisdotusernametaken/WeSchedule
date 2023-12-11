@@ -8,6 +8,9 @@
 
 const dbConnection = require("./dbConfig");
 
+// Utilities
+const { success200 } = require("./routing");
+
 // If the array is already stringified, keep it; otherwise stringify it.
 const columnStr = arrayOrStr =>
     Array.isArray(arrayOrStr) ? arrayOrStr.join(", ") : arrayOrStr;
@@ -33,7 +36,7 @@ const selectorValArr = arrayOrScalar =>
 // newVals is an object whose keys are column names and whose values are the
 // new column values.
 // selector and selectorVal are used for the WHERE clause.
-const modularUpdate = (
+const update = (
     table, newVals, selector, selectorVal, callback
 ) => dbConnection.query(
     `UPDATE ${table}
@@ -44,9 +47,16 @@ const modularUpdate = (
     callback // Handle err/result
 );
 
+// Set response data for a successful update, noting whether the new values are
+// identical to the old values.
+const updateSuccess = (res, result) => success200(res,
+    result.changedRows === 0 ? // Success, but same values given
+        "Information unchanged." : "Information succesfully updated."
+);
+
 // In the specified table, retrieve the row(s) where the column selector has
 // the value selectorVal (or all rows from the table if selector is undefined).
-// Multiple selectors are not allowed.
+// Multple selector columns are allowed.
 // Call the callback function as with any call to dbConnection.query.
 // 
 // selector and selectorVal are used for the WHERE clause.
@@ -55,9 +65,9 @@ const select = (
 ) => dbConnection.query(
     `SELECT ${columnStr(columns)}
      FROM ${table}${
-        selector != undefined ? " WHERE " + selector + " = ?" : ""
+        selector != undefined ? " WHERE " + selectorStr(selector) : ""
      };`,
-    selector != undefined ? [selectorVal] : [],
+    selector != undefined ? selectorValArr(selectorVal) : [],
     callback
 )
 
@@ -105,6 +115,7 @@ const toBool = (results, ...cols) => {
 
 
 module.exports = {
-    modularUpdate, select, selectJoin, insert, deleteData,
+    update, select, selectJoin, insert, deleteData,
+    updateSuccess,
     toBool
 };

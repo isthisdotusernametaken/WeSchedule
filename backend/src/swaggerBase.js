@@ -10,67 +10,67 @@
  * @swagger
  * tags:
  *      name: Authentication
- *      description: Creating, logging into, and logging out of accounts.
+ *      description: WS-1 (Has External Service 1) - Creating, logging into, and logging out of accounts.
  */
 /**
  * @swagger
  * tags:
  *      name: Users
- *      description: Retrieving and modifying account data.
+ *      description: WS-2 - Retrieving and modifying account data.
  */
 /**
  * @swagger
  * tags:
  *      name: Groups
- *      description: Creating, accessing, modifying, and deleting groups.
+ *      description: WS-3 (Has Composition 1) - Creating, accessing, modifying, and deleting groups.
  */
 /**
  * @swagger
  * tags:
  *      name: Group Members
- *      description: Adding/removing group members and modifying member permissions.
+ *      description: WS-4 - Adding/removing group members and modifying member permissions.
  */
 /**
  * @swagger
  * tags:
  *      name: Topics
- *      description: Creating, accessing, modifying, and deleting topics in a group.
+ *      description: WS-5 - Creating, accessing, modifying, and deleting topics in a group.
+ */
+/**
+ * @swagger
+ * tags:
+ *      name: Topic Members
+ *      description: WS-6 - Creating, accessing, modifying, and deleting topics in a group.
  */
 /**
  * @swagger
  * tags:
  *      name: Messages
- *      description: Creating, accessing, modifying, and deleting messages within a topic in a group.
- */
-/**
- * @swagger
- * tags:
- *      name: Language
- *      description: Accessing the list of language supported by the application and translated text between them.
+ *      description: WS-7 (Has Composition 2) - Creating, accessing, modifying, and deleting messages within a topic in a group.
  */
 /**
  * @swagger
  * tags:
  *      name: Events
- *      description: Creating, accessing, modifying, and deleting events within a topic in a group.
+ *      description: WS-8 - Creating, accessing, modifying, and deleting events within a topic in a group.
  */
 /**
  * @swagger
  * tags:
  *      name: Group Log
- *      description: Creating, accessing, and deleting logged history points in a group.
+ *      description: WS-9 - Creating, accessing, and deleting logged history points in a group.
  */
 /**
  * @swagger
  * tags:
- *      name: Group Statistics
- *      description: Generating statistics that describe the group and possibly storing the current statistics as a logged history point.
+ *      name: Language
+ *      description: WS-10 (Has External Service 2) - Accessing the list of language supported by the application and translated text between them.
  */
 
 /**
  * @swagger
  * components:
- *     schemas:
+ *      schemas:
  *          Success:
  *              type: object
  *              required:

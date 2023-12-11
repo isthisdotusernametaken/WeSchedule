@@ -48,7 +48,6 @@ const requireSomeBodyParam = (req, res, ...params) => {
     }
     return false;
 }
-    
 
 // Require the specified request header, as for requireBodyParam.
 const requireHeader = (req, res, header) => {
@@ -64,6 +63,13 @@ const requireHeader = (req, res, header) => {
 // Require all of the specified request headers, as for requireHeader.
 const requireHeaders = (req, res, ...headers) =>
     headers.some(header => requireHeader(req, res, header));
+
+// Determine whether the given value is a valid boolean
+const isBool = val => [true, false, "true", "false", 0, 1].includes(val);
+
+// Convert the given value to a boolean. This assumes isBool was called.
+const convertToBool = val => val === "true" || val === true || val === 1;
+
 
 // ----------------------------------------------------------------------------
 // (B)  Report success to the client and return any necessary message or data.
@@ -112,6 +118,19 @@ const unauthorizedError = (res, msg) => error(res, 401, msg);
 // the resource cannot be accessed.
 const notFoundError = (res, msg) => error(res, 404, msg);
 
+// Report the resource either does not exist or cannot be accessed by this user
+// with a 404 Not Found status code.
+// If req is defined, use it to indicate to global admins that the resource
+// truly does not exist; req may not be defined so that global admins cannot
+// access a resource either. It is still possible for global admins to access
+// such resources, but many visible steps (such as forcibly joining a group)
+// will be required, allowing global admins to perform system maintenance while
+// also providing some barriers to unchecked admin intervention.
+const notExistsOrNoAccess = (req, res, resource) =>
+    notFoundError(res, `${resource} does not exist` + (
+        (req && req.session.admin) ? "." : ", or you do not have access for this."
+    ));
+
 // Report the specified error with a 500 Internal Server Error status code to
 // indicate server error.
 const serverErrorNoLog = (res, msg) => error(res, 500, msg);
@@ -156,7 +175,11 @@ const handleErrorsAfter = (req, res, err) => unknownError(res, err);
 
 module.exports = {
     paramGiven, requireBodyParams, requireSomeBodyParam, requireHeaders,
+    isBool, convertToBool,
+
     getSuccess, createSuccess, success200,
-    clientError, unauthorizedError, notFoundError, serverErrorNoLog, serverError, dbError,
+    clientError, unauthorizedError, notFoundError, notExistsOrNoAccess,
+    serverErrorNoLog, serverError, dbError,
+    
     handleErrorsBefore, handleErrorsAfter
 };

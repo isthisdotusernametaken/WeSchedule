@@ -18,11 +18,15 @@ const MAX_SESSION_AGE = 1000 * 60 * 60 * 24 * 7 // 7 days before auto logout
 const express = require("express")
 const cors = require("cors")
 const session = require("express-session")
+const swaggerUI = require("swagger-ui-express");
+const swaggerJSDoc = require("swagger-jsdoc");
+
+// Load utilities
 const {
     handleErrorsBefore, handleErrorsAfter, unauthorizedError
 } = require("./src/routing")
-const swaggerUI = require("swagger-ui-express");
-const swaggerJSDoc = require("swagger-jsdoc");
+const { ifGroupMember } = require("./src/services/groupMembers");
+const { ifTopicMember } = require("./src/services/topicMembers");
 
 
 // ----------------------------------------------------------------------------
@@ -81,24 +85,61 @@ app.use("/docs", swaggerUI.serve, swaggerUI.setup(swaggerJSDoc({
 // No session required for this service. This service establishes sessions.
 app.use("/auth", require("./src/services/auth").router);
 
+
+// For all but /auth
 // If valid session, continue; otherwise, skip next callbacks.
+// Valid session required for all services below (2-10)
 const authenticatedUser = express.Router()
-// eslint-disable-next-line
 authenticatedUser.use((req, res, next) => req.session.user != null ? next() :
     unauthorizedError(res, "Invalid session. You must log in with /auth/login.")
 );
 
-// Valid session required for these services
 authenticatedUser.use("/users", require("./src/services/users"));
 authenticatedUser.use("/groups", require("./src/services/groups"));
-authenticatedUser.use("/groups/:group/users", require("./src/services/groupMembers"));
-// authenticatedUser.use("/groups/:group/topics", require("./src/services/topics"));
-// authenticatedUser.use("/groups/:group/topics/:topic/messages", require("./src/services/messages"));
+authenticatedUser.use("/groups/:gid/users", require("./src/services/groupMembers").router);
 authenticatedUser.use("/language", require("./src/services/language").router);
-// authenticatedUser.use("/groups/:group/events", require("./src/services/events"));
-// authenticatedUser.use("/groups/:group/stats", require("./src/services/stats"));
-// authenticatedUser.use("/groups/:group/visualization", require("./src/services/visualization"));
 
+
+// For /groups/{gid}/...
+// If group member, continue; otherwise, skip next callbacks.
+// Valid group member required for all services below (5-9). Required for some
+// routes in WS-4, so this is handled in that service's file.
+const authenticatedGroupMember = express.Router({ mergeParams: true })
+authenticatedGroupMember.use((req, res, next) =>
+    ifGroupMember(false, res, req.params.gid, req.session.user, localAdmin => {
+        // If user is in group, pass their admin status to route
+        req.localAdmin = localAdmin;
+        next();
+    })
+);
+
+authenticatedGroupMember.use("/topics", require("./src/services/topics").router);
+authenticatedGroupMember.use("/topics/:topic/users", require("./src/services/topicMembers").router);
+// authenticatedGroupMember.use("/log", require("./src/services/log"));
+
+
+// For /groups/{gid}/topics/{topic}/...
+// If topic member, continue; otherwise, skip next callbacks.
+// Valid topic member required for all services below (7-8). Required for some
+// routes in WS-6, so this is handled in that service's file.
+const authenticatedTopicMember = express.Router({ mergeParams: true })
+authenticatedTopicMember.use((req, res, next) =>
+    ifTopicMember(res, req.params.gid, req.params.topic, req.session.user,
+        (event_perm, message_perm) => {
+            // If user is in topic, pass their event and message perms to route
+            req.event_perm = event_perm;
+            req.message_perm = message_perm;
+            next();
+        }
+    )
+);
+
+// authenticatedGroupMember.use("/topics/:topic/messages", require("./src/services/messages"));
+// authenticatedGroupMember.use("/events", require("./src/services/events"));
+
+
+authenticatedGroupMember.use("/topics/:topic", authenticatedTopicMember);
+authenticatedUser.use("/groups/:gid", authenticatedGroupMember);
 app.use("/", authenticatedUser);
 
 

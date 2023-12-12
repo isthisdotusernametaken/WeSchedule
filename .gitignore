@@ -35,3 +35,5 @@
 /backend/yarn-debug.log*
 /backend/yarn-error.log*
 
+# secrets
+/backend/config/

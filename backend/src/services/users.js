@@ -20,6 +20,7 @@ const {
 const {
     generateSalt, hash, validPass, validEmail
 } = require("../emailPassword");
+const { validEmailLength } = require("../lengths");
 
 // Language code validation
 const { validLanguage } = require("./language");
@@ -64,7 +65,7 @@ const getUser = (email, req, res, successCallback) => {
                 dbError(res, err) :
             result.length === 0 ? // No rows matched the username (bad session).
                 serverError(res) :
-            successCallback(toBool(result, "admin")[0])
+            successCallback({ ...toBool(result, "admin")[0], username: req.session.user })
     );
 };
 

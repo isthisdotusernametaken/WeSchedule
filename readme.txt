@@ -26,7 +26,7 @@ Running the application:
 			username: yetAnotherUser	password: Password0!
 			
 			Note: While your account information will be saved to the database, your session information is only stored in memory for this prototype, and any changes that cause the Express server to restart will discard session information, requiring you to log in again.
-		(c) Once logged in, use the tabs at the top of the screen to select a group you are in, view the group's calendar, view the group's topics, and view/send messages in one of the topic chats. Within each of these categories, if you have the proper permissions, you can view and possibly change the data.
+		(c) Once logged in, use the tabs at the top of the screen to select a group you are in, view the group's log, view the group's members, select a topic in the group, and view the topic's events and messages. Within each of these tabs, if you have the proper permissions, you can add or modify data.
 
 
 Development platform:

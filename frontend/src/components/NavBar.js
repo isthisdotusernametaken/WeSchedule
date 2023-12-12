@@ -3,6 +3,7 @@ import { THEMES, setTheme } from "../theme.js";
 
 function NavBar({ username, name }) {
     return (
+        // JSX was originally BootSwatch HTML and has been heavily modified to fit our site by Caleb Krauter.
         <nav className="navbar navbar-expand-lg bg-primary" data-bs-theme="dark">
             <div className="container-fluid">
                 {/* Logo and title */}

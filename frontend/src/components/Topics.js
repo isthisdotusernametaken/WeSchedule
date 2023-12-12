@@ -1,3 +1,14 @@
+import { useState } from "react";
+function Topics({
+    group,
+    setTopic,
+    canModify
+}) {
+    const [topics, setTopics] = useState([]);
+    return (
+        <div></div>
+    );
+}
 const Topics = ({
     topicName,
     description

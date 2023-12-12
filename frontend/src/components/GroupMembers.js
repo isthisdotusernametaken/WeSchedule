@@ -17,6 +17,10 @@ function GroupMembers({
 
     return (
         <div>
+            <button>
+                <p>Add Member to Group</p>
+                {membersInGroup.map(Group)}
+            </button>
             {/* If true add a delete and edit button one time.*/}
             {checkCanModify ? 
                 <div>

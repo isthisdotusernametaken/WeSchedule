@@ -22,27 +22,6 @@ function MessageCenter({user}) {
     const inputField = useRef(null);
     const latestMsg = useRef(null);
 
-    // const createGroup = () => {
-    //     addGroup([...groups, {name: "Cod Squad", owner: "Caleb Krauter", creationDate: "Group Creation Date", joinedDate: "Joined Date"}]);
-    //     console.log(groups);
-    // };
-
-    // const createMembers = () => {
-    //     addMember([...members, {username: "user", joinedDate: "Joined time", adminStatus: "true/false"}]);
-    // }
-
-    // const createTopic = () => {
-    //     addTopic([...topics, {topicName: "Topic Name", description: "About"}]);
-    // }
-
-    // const addMemberToCurTopic = () => {
-    //     addMemberToTopic([...topics, {username: "username", eventPermission: "True/False", msgPermission: "True/False"}]);
-    // }
-
-    // const logDetails = () => {
-    //     log([...logs, {time: "time", description: "description"}]);
-    // }
-
     const loadGroup = () => {
         // Load corespondance based on group.
         console.log("hi");

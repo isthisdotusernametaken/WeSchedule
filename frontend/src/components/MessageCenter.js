@@ -10,11 +10,6 @@ function MessageCenter({user}) {
 
     // Use state hooks to store the messages and the current message being sent.
     const [correspondence, setMessages] = useState([]);
-    const [groups, addGroup] = useState([]);
-    const [members, addMember] = useState([]);
-    const [topics, addTopic] = useState([]);
-    const [membersOfTopic, addMemberToTopic] = useState([]);
-    const [logs, log] = useState([]);
     let [btnActive, setBtnActive] = useState(false);
 
 
@@ -54,7 +49,7 @@ function MessageCenter({user}) {
             setMessages([...correspondence, {user: user, time: (new Date()).toLocaleDateString("en-US", timeFormat), content: message}]);
             inputField.current.value = "";
         }
-        
+
     }
 
     // This function is somewhat inspired by an exmaple found using chatGPT 3.5 ->Caleb

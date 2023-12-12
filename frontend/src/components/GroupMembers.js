@@ -13,19 +13,23 @@ function GroupMembers({
     canModify
 }) {
     const [membersInGroup, setMemberInGroup] = useState([]);
-    const [editSelected, setEditSelected] = useState([]);
+    const [editSelected, setEditSelected] = useState(false);
 
     return (
         <div>
             <button>
                 <p>Add Member to Group</p>
-                {membersInGroup.map(Group)}
+                {membersInGroup.map(GroupMember)}
             </button>
             {/* If true add a delete and edit button one time.*/}
             {checkCanModify ? 
                 <div>
                     <button>Delete</button>
-                    <button>Edit</button>
+                    <button onClick={selected 
+                        ? setEditSelected(true) 
+                        : setEditSelected(false)}>
+                            Edit
+                    </button>
                     {/* If edit is pressed, input pops up one time.*/}
                     {editSelected ? 
                     <input></input>
@@ -43,11 +47,10 @@ const GroupMember = ({
     adminStatus
     // component to display all the members of the current group (with username, joined date, and admin status for each);
 }) => {
-    return (
-        <div>
-            <p>{username} | Admin Status: {adminStatus}</p>
-            <p>Joined Group on: {joinedDate}</p>
-        </div>
-    )
+    <div>
+        <p>{username} | Admin Status: {adminStatus}</p>
+        <p>Joined Group on: {joinedDate}</p>
+    </div>
+    
 }
 export default GroupMembers;

@@ -9,6 +9,7 @@ function Groups({
     const [groups, setGroups] = useState([]);
     return (
         <div>
+            {/* setGroup or setGroups? */}
             <button onClick={setGroup}>
                 <div>{user}'s group:</div>
                 {groups.map(Group)}
@@ -25,12 +26,11 @@ const Group = ({
     joinedDate
     // (with name, owner, creation date, and optionally joined date and admin status for each row);
 }) => {
-    return (
-        <div>
-            <p>{name} | Owner: {owner}</p>
-            <p>Chat Started: {creationDate}</p>
-            <p>You Joined on: {joinedDate}</p>
-        </div>
-    );
+    <div>
+        <p>{name} | Owner: {owner}</p>
+        <p>Chat Started: {creationDate}</p>
+        <p>You Joined on: {joinedDate}</p>
+    </div>
+
 }
 export default Groups;

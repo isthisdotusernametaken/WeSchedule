@@ -1,10 +1,31 @@
-const Logs = ({
+import { useState } from "react";
+
+function Logs({
+    group,
+    canAdd
+}) {
+
+    const [group, canAdd] = useState;
+
+    return (
+        <div>
+            <button>
+                <p>Add Log</p>
+                {group.map(Log)}
+            </button>            
+        </div>
+    );
+}
+const Log = ({
+    // Take input
     time,
     description
-    // component to display all log entries for a group (with time and description for each)
-}) =>
+}) => {
     <div>
         <p>{time}</p>
-        <p>{description}</p>
+        <p>Description: {description}</p>
+        <input></input>
     </div>
+    
+}
 export default Logs;

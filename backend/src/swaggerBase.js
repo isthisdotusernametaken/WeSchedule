@@ -130,5 +130,5 @@
  *                      type: string
  *                      description: A short message indicating the server has encountered an unexpected error and failed to fulfill the request.
  *              example:
- *                  error: Server error. Please report to admin.
+ *                  error: Server error. Please report to global admin.
  */

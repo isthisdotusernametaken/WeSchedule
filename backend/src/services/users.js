@@ -25,13 +25,52 @@ const {
 const { validLanguage } = require("./language");
 
 // SQL update statement
-const { update, select, updateSuccess } = require("../sqlQuery");
+const { update, select, updateSuccess, toBool } = require("../sqlQuery");
 
 // Handle invalid sessions
 const { sessionError } = require("./auth");
 
+
 // ----------------------------------------------------------------------------
-// (A)  Define routes.
+// (A)  Define data and behavior used by routes below.
+// ----------------------------------------------------------------------------
+
+// Route (1) as a function. Retireve all information about the current user. On
+// success, successCallback with the user's object.
+const getUser = (email, req, res, successCallback) => {
+    if (paramGiven(email)) {
+        if (!req.session.admin)
+            return unauthorizedError(res,
+                "Only global admins may use this header."
+            );
+        
+        // Retrieve specified user's information from their email
+        return select(
+            "USERS", "username, email, name, joined_time, lang",
+            "email", email, (err, result) =>
+                err ?
+                    dbError(res, err) :
+                result.length === 0 ?
+                    clientError(res, "This email is not in use.") :
+                successCallback(result[0]) // User exists
+        );
+    }
+
+    // No Email header. Get the logged in user's details.
+    select(
+        "USERS", "name, email, joined_time, lang, admin",
+        "username", req.session.user, (err, result) =>
+            err ?
+                dbError(res, err) :
+            result.length === 0 ? // No rows matched the username (bad session).
+                serverError(res) :
+            successCallback(toBool(result, "admin")[0])
+    );
+};
+
+
+// ----------------------------------------------------------------------------
+// (B)  Define routes.
 // ----------------------------------------------------------------------------
 
 // ----------------------------------------------------------------------------
@@ -97,40 +136,9 @@ const { sessionError } = require("./auth");
  *                          schema:
  *                              $ref: '#/components/schemas/Server Error'
  */
-router.get('/', (req, res) => {
-    // If the Email header is specified, the user must be a
-    // global admin. If they are, the requested user's details will be
-    // returned; otherwise, the request will fail as unauthorized.
-    const email = req.get("Email");
-    if (paramGiven(email)) {
-        if (!req.session.admin)
-            return unauthorizedError(res,
-                "Only global admins may use this header."
-            );
-        
-        // Retrieve specified user's information from their email
-        return select(
-            "USERS", "username, email, name, joined_time, lang",
-            "email", email, (err, result) =>
-                err ?
-                    dbError(res, err) :
-                result.length === 0 ?
-                    clientError(res, "This email is not in use") :
-                getSuccess(res, result[0]) // User exists
-        );
-    }
-
-    // No Email header. Get the logged in user's details.
-    select(
-        "USERS", "name, email, joined_time, lang, admin",
-        "username", req.session.user, (err, result) =>
-            err ?
-                dbError(res, err) :
-            result.length === 0 ? // No rows matched the username (bad session).
-                serverError(res) :
-            getSuccess(res, result)
-    );
-});
+router.get('/', (req, res) => getUser(
+    req.get("Email"), req, res, data => getSuccess(res, data)
+));
 
 // ----------------------------------------------------------------------------
 // (2) Update the password, email, name, and/or language of the current user.
@@ -247,4 +255,4 @@ router.put('/', async (req, res) => {
     })
 });
 
-module.exports = router;
+module.exports = { router, getUser };

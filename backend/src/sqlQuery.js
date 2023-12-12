@@ -4,6 +4,10 @@
 // SQL Query Utilities
 //
 // Author: Joshua Barbee
+//
+// The various select methods can be merged and
+// otherwise tidied, but I did not have time. 
+//
 // ----------------------------------------------
 
 const dbConnection = require("./dbConfig");
@@ -71,6 +75,33 @@ const select = (
     callback
 )
 
+// As for select() above, but with guaranteed ascending ordering.
+const selectOrderBy = (
+    table, columns, selector, selectorVal, orderBy, callback
+) => dbConnection.query(
+    `SELECT ${columnStr(columns)}
+     FROM ${table}${
+        selector != undefined ? " WHERE " + selectorStr(selector) : ""
+     }
+     ORDER BY ${orderBy};`,
+    selector != undefined ? selectorValArr(selectorVal) : [],
+    callback
+)
+
+// As for selectOrderBy() above, but with mandatory selectors and a mandatory
+// additional condition for values being greater than or equal to a given
+// value.
+const selectOrderByGOrE = (
+    table, columns, selector, selectorVal, orderBy, gOrE, minVal, callback
+) => dbConnection.query(
+    `SELECT ${columnStr(columns)}
+     FROM ${table}
+     WHERE ${selectorStr(selector)} AND ${gOrE} >= ?
+     ORDER BY ${orderBy};`,
+    [...selectorValArr(selectorVal), minVal],
+    callback
+)
+
 // In the specified join with the specified joinOn condition, retrieve the
 // row(s) where the column selector has the value selectorVal (or all rows from
 // the join if selector is undefined). Multiple selectors are not explicitly
@@ -115,7 +146,7 @@ const toBool = (results, ...cols) => {
 
 
 module.exports = {
-    update, select, selectJoin, insert, deleteData,
+    update, select, selectOrderBy, selectOrderByGOrE, selectJoin, insert, deleteData,
     updateSuccess,
     toBool
 };

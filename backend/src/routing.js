@@ -110,8 +110,8 @@ const error = (res, status, msg) => res.status(status).json({error: msg});
 // client error.
 const clientError = (res, msg) => error(res, 400, msg);
 
-// Report the specified error with a 400 Bad Request status code to indicate
-// client error.
+// Report the specified error with a 401 Unauthorized status code to indicate
+// lack of access.
 const unauthorizedError = (res, msg) => error(res, 401, msg);
 
 // Report the specified error with a 404 Not Found status code to indicate
@@ -145,12 +145,15 @@ const serverError = (res, err, msg) => {
 // Report a data retrieval error.
 // This should be used when any unexpected SQL error occurs.
 const dbError = (res, err) =>
-    serverError(res, err, "Data error. Please report to admin.");
+    serverError(res, err,
+        "Data error. Please refresh the page. If the error persists, please " +
+        "report to global admin."
+    );
 
 // Report the specified error with a 500 Internal Server Error status code to
 // indicate server error.
 const unknownError = (res, err) =>
-    serverError(res, err, "Server error. Please report to admin.");
+    serverError(res, err, "Server error. Please report to global admin.");
 
 // ----------------------------------------------------------------------------
 // (D)  Handle all uncaught errors from external modules and custom code to

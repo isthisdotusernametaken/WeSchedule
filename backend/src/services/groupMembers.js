@@ -79,6 +79,20 @@ const addGroupMember = (
         )
 );
 
+// Require the target user to not be a local admin in the group. If the target
+// user is not a local admin, call successCallback.
+const ifTargetIsNotLocalAdmin = (res, group, user, successCallback) => select(
+    "GROUP_MEMBERS", "local_admin", ["gid", "username"], [group, user],
+    (err, result) =>
+        err ?
+            dbError(res, err) :
+        result.length === 0 ? // No match
+            userNotInGroup(res) :
+        result[0].local_admin ? // User is local admin
+            cannotApplyToLocalAdminError(res) :
+        successCallback()
+)
+
 // 401 for lacking group owner privileges.
 const notOwnerError = res =>
     unauthorizedError(res, "Only the group owner may perform this operation.");
@@ -87,11 +101,26 @@ const notOwnerError = res =>
 const notLocalAdminError = res =>
     unauthorizedError(res, "Only local admins may perform this operation.");
 
+// 403 for lacking local admin privileges.
+const cannotApplyToLocalAdminError = res =>
+    unauthorizedError(res, "This operation cannot be performed on local admins.");
+
 // 404 for user either not existing or not being in the group. Sets Bad-Param
 // header to "username".
 const userNotInGroup = res => {
     res.set("Bad-Param", "username")
     notFoundError(res, "That user does not exist or is not in this group.");
+}
+
+// 404 for user, not existing, not being in the group, or being a local admin
+// that this operation cannot be applied to. Sets Bad-Param header to
+// "username".
+const userNotInGroupOrAdmin = res => {
+    res.set("Bad-Param", "username")
+    notFoundError(res,
+        "That operation cannot be applied to this user. The user does not " +
+        "exist or is not in this group, or the user is a local admin."
+    );
 }
 
 // 404 for group not existing or not being allowed to be accessed. Sets the
@@ -490,15 +519,18 @@ router.delete('/:username', (req, res) =>
     ifGroupMember(false, res, req.params.gid, req.session.user, currentIsLocalAdmin =>
         (!currentIsLocalAdmin && req.session.user !== req.body.username) ?
             notLocalAdminError(res) : // Non-admin can only remove self
-            deleteData(
+            deleteData( // Admin can remove anyone but other admin (must demote first)
                 "GROUP_MEMBERS",
-                ["gid", "username"], [req.params.gid, req.params.username],
+                ["gid", "username", "local_admin"],
+                (req.session.user === req.body.username ? // Always allow user to delete self; only allow user to delete others if others are not admins
+                    [req.params.gid, req.params.username] :
+                    [req.params.gid, req.params.username, false]),
                 (err, result) => {
                     if (err)
                         return dbError(res, err);
         
                     if (result.affectedRows === 0)
-                        return userNotInGroup(res);
+                        return userNotInGroupOrAdmin(res);
         
                     return success200(res, "User successfully removed.");
                 }
@@ -507,4 +539,6 @@ router.delete('/:username', (req, res) =>
 );
 
 
-module.exports = { router, ifGroupMember, addGroupMember, notLocalAdminError };
+module.exports = { router,
+    ifGroupMember, addGroupMember, notLocalAdminError, ifTargetIsNotLocalAdmin
+};

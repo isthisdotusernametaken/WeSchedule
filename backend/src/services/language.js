@@ -39,7 +39,7 @@ const azureKey = require("../../config/azureKey.json").key;
 let languages = undefined;
 
 // Attempt to load the list of languages from the external service.
-// loadLanguages();
+loadLanguages();
 async function loadLanguages() {
     try {
         // Get the list of languages from Azure.
@@ -59,15 +59,17 @@ async function loadLanguages() {
     }
 }
 
-// If the language is invalid, set the response information and return false;
-// otherwise, return true.
-function validLanguage(res, lang) {return true;
+// If the language is invalid, set the response information (if res is defined)
+// and return false; otherwise, return true.
+function validLanguage(res, lang) {
     if (languages === undefined) {
-        serverErrorNoLog(res, "Languages cannot currently be verified.");
+        if (res)
+            serverErrorNoLog(res, "Languages cannot currently be verified.");
         return false;
     }
     if (languages[lang] === undefined) {
-        clientError(res, "Invalid language.");
+        if (res)
+            clientError(res, "Invalid language.");
         return false;
     }
 
@@ -76,28 +78,36 @@ function validLanguage(res, lang) {return true;
 
 // Check that the specified langauge is valid, and attempt to translate the
 // strings to the specified language.
-// On failure, set the response data and return undefined; on success, return
-// the translated strings and do not set the response data. 
-async function translate(res, strs, lang) {
-    if (!validLanguage(res, lang))
-        return undefined; // Indicate failure for internal use
+// On failure, set the response data if res is defined, or call failCallback if
+// res is undefined; on success, call successCallback with the translated
+// strings as an array. 
+function translate(res, strs, lang, failCallback, successCallback) {
+    // Require the body to be an array of strings or items that can be
+    // unambiguously coereced to strings.
+    if (!Array.isArray(strs) ||
+        strs.some(elem => typeof elem === "object" || elem == null)) {
 
-    try {
-        // Send translation request to external service
-        const data = (await axios.post(translateUrl,
-            strs.map(str => ({Text: `${str}`})), // Body
-            {
-                params: { "api-version": "3.0", to: lang },
-                headers: { "Ocp-Apim-Subscription-Key": azureKey }
-            }
-        )).data;
-
-        // Return an array of only the translated strings.
-        return data.map(obj => obj.translations[0].text);
-    } catch (err) {
-        serverError(res, err, "The text could not be translated.");
-        return undefined;
+        return res ?
+            clientError(res, "The content to translate must be an array of strings.") :
+            failCallback(); // Bad input from internal request
     }
+
+    if (!validLanguage(res, lang)) return;
+
+    // Send translation request to external service
+    axios.post(
+        translateUrl,
+        strs.map(str => ({Text: `${str}`})), // Body
+        {
+            params: { "api-version": "3.0", to: lang },
+            headers: { "Ocp-Apim-Subscription-Key": azureKey }
+        }
+    ).then(({ data }) => // Translation successful
+        successCallback(data.map(obj => obj.translations[0].text))
+    ).catch(err => res ?
+        serverError(res, err, "The text could not be translated.") :
+        failCallback()
+    );
 };
 
 // ----------------------------------------------------------------------------
@@ -204,21 +214,15 @@ router.get('/', (req, res) => languages ?
  *                          schema:
  *                              $ref: '#/components/schemas/Server Error'
  */
-router.post('/translate', async (req, res) => {
+router.post('/translate', (req, res) => {
     if (requireHeaders(req, res, "destLang"))
         return;
 
-    // Require the body to be an array of strings or items that can be
-    // unambiguously coereced to strings.
-    if (!Array.isArray(req.body) ||
-        req.body.some(elem => typeof elem === "object" || elem == null)) {
-        return clientError(res, "The body must be a list of strings.");
-    }
-
     // Attempt to translate strings
-    const translations = await translate(res, req.body, req.get("destLang"));
-    if (translations !== undefined) // Return translated strings on success
-        getSuccess(res, translations);
+    translate(
+        res, req.body, req.get("destLang"), null, translations =>
+            getSuccess(res, translations)
+    );
 });
 
 

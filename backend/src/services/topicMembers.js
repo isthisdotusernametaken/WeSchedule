@@ -13,12 +13,12 @@ const router = require("express").Router({ mergeParams: true });
 const {
     paramGiven, isBool, convertToBool,
     getSuccess, createSuccess, success200,
-    notFoundError, clientError, dbError, requireSomeBodyParam
+    notFoundError, clientError, dbError, requireSomeBodyParam, notExistsOrNoAccess
 } = require("../routing");
 const {
     select, insert, update, updateSuccess, deleteData, toBool
 } = require("../sqlQuery");
-const { notLocalAdminError } = require("./groupMembers");
+const { notLocalAdminError, ifTargetIsNotLocalAdmin } = require("./groupMembers");
 
 // ----------------------------------------------------------------------------
 // (A)  Define data and behavior used by routes below.
@@ -33,7 +33,7 @@ const ifTopicMember = (res, group, topic, user, successCallback) =>
         (err, result) => err ?
             dbError(res, err) :
             result.length === 0 ? // Invalid topic or member
-                badUserOrTopic(res) :
+                noTopicAccess(res) :
                 successCallback(!!result[0].event_perm, !!result[0].message_perm) // Valid member, continue
     );
 
@@ -70,6 +70,14 @@ const badUserOrTopic = res => {
     );
 }
 
+// 404 for topic not existing or not being allowed to be accessed. Sets the
+// Bad-Param header to "topic". If req is not null, global admins will see the
+// group does not exist (rather than simply being inaccessible).
+const noTopicAccess = res => {
+    res.set("Bad-Param", "topic");
+    notExistsOrNoAccess(null, res, "Topic");
+}
+
 /**
  * @swagger
  * components:
@@ -92,6 +100,7 @@ const badUserOrTopic = res => {
  *                  event_perm: true
  *                  message_perm: true
  */
+
 
 // ----------------------------------------------------------------------------
 // (B)  Define routes.
@@ -295,6 +304,12 @@ router.get('/:username', (req, res) => select(
  *                      application/json:
  *                          schema:
  *                              $ref: '#/components/schemas/Bad Request'
+ *              404:
+ *                  description: Not Found. The group or topic or user does not exist, or the specified topic is not in the group.
+ *                  content:
+ *                      application/json:
+ *                          schema:
+ *                              $ref: '#/components/schemas/Not Found'
  *              401:
  *                  description: Unauthorized. Not logged in or lack required privileges.
  *                  content:
@@ -310,20 +325,20 @@ router.get('/:username', (req, res) => select(
  */
 router.post('/:username', (req, res) => addTopicMember(
     req.localAdmin, res, req.params.gid, req.params.topic, req.params.username,
-    false, true, () => // Default permission only for sending messages
+    true, true, () => // Default permissions is all (may change later)
         createSuccess(res, "User added to topic.")
 ));
 
 // ----------------------------------------------------------------------------
 // (4) Update the user's event and/or message permissions. Only a local admin
-//     can do this.
+//     can do this. This cannot be applied to local admins.
 //
 // URI: http://localhost:3001/groups/{gid}/topics/{topic}/users/{username}
 /**
  * @swagger
  * /groups/{gid}/topics/{topic}/users/{username}:
  *      put:
- *          summary: Update the user's event and/or message permissions. Only a local admin can do this.
+ *          summary: Update the user's event and/or message permissions. Only a local admin can do this. This cannot be applied to local admins.
  *          tags: [Topic Members]
  *          parameters:
  *              - in: path
@@ -421,28 +436,34 @@ router.put('/:username', (req, res) => {
         values.message_perm = convertToBool(req.body.message_perm);
     }
 
-    update(
-        "TOPIC_MEMBERS", values,
-        ["gid", "topic", "username"],
-        [req.params.gid, req.params.topic, req.params.username],
-        (err, result) =>
-            err ?
-                dbError(res, err) :
-            result.affectedRows === 0 ? // No row matched gid, topic, and username
-                badUserOrTopic(res) :
-            updateSuccess(res, result) // Updated
+    // Only update permissions if target user is not a local admin.
+    // Being a local admin freezes current permissions. If the permissions
+    // must be updated, the owner should first temporarily demote the user.
+    ifTargetIsNotLocalAdmin(res, req.params.gid, req.params.username, () =>
+        update(
+            "TOPIC_MEMBERS", values,
+            ["gid", "topic", "username"],
+            [req.params.gid, req.params.topic, req.params.username],
+            (err, result) =>
+                err ?
+                    dbError(res, err) :
+                result.affectedRows === 0 ? // No row matched gid, topic, and username
+                    badUserOrTopic(res) :
+                updateSuccess(res, result) // Updated
+        )
     )
 });
 
 // ----------------------------------------------------------------------------
 // (5) Remove the specified user from the topic. Only local admins can do this.
+//     This cannot be applied to local admins.
 //
 // URI: http://localhost:3001/groups/{gid}/topics/{topic}/users/{username}
 /**
  * @swagger
  * /groups/{gid}/topics/{topic}/users/{username}:
  *      delete:
- *          summary: Remove the specified user from the topic. Only local admins can do this.
+ *          summary: Remove the specified user from the topic. Only local admins can do this. This cannot be applied to local admins.
  *          tags: [Topic Members]
  *          parameters:
  *              - in: path
@@ -465,7 +486,7 @@ router.put('/:username', (req, res) => {
  *                required: true
  *          responses:
  *              200:
- *                  description: User removed from group. Their messages are not deleted.
+ *                  description: User removed from topic. Their messages are not deleted.
  *                  content:
  *                      application/json:
  *                          schema:
@@ -498,16 +519,19 @@ router.put('/:username', (req, res) => {
 router.delete('/:username', (req, res) =>
     !req.localAdmin ? // Don't allow delete from non-admin
         notLocalAdminError(res) :
-    deleteData(
-        "TOPIC_MEMBERS",
-        ["gid", "topic", "username"],
-        [req.params.gid, req.params.topic, req.params.username],
-        (err, result) =>
-            err ?
-                dbError(res, err) :
-            result.affectedRows === 0 ? // Topic or user not found
-                badUserOrTopic(res) :
-            success200(res, "User successfully removed from topic.")
+    // Don't allow local admins to delete each other (or themselves) from topics.
+    ifTargetIsNotLocalAdmin(res, req.params.gid, req.params.username,
+        () => deleteData(
+            "TOPIC_MEMBERS",
+            ["gid", "topic", "username"],
+            [req.params.gid, req.params.topic, req.params.username],
+            (err, result) =>
+                err ?
+                    dbError(res, err) :
+                result.affectedRows === 0 ? // Topic or user not found
+                    badUserOrTopic(res) :
+                success200(res, "User successfully removed from topic.")
+        )
     )
 );
 

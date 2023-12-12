@@ -94,7 +94,7 @@ authenticatedUser.use((req, res, next) => req.session.user != null ? next() :
     unauthorizedError(res, "Invalid session. You must log in with /auth/login.")
 );
 
-authenticatedUser.use("/users", require("./src/services/users"));
+authenticatedUser.use("/users", require("./src/services/users").router);
 authenticatedUser.use("/groups", require("./src/services/groups"));
 authenticatedUser.use("/groups/:gid/users", require("./src/services/groupMembers").router);
 authenticatedUser.use("/language", require("./src/services/language").router);
@@ -115,7 +115,7 @@ authenticatedGroupMember.use((req, res, next) =>
 
 authenticatedGroupMember.use("/topics", require("./src/services/topics").router);
 authenticatedGroupMember.use("/topics/:topic/users", require("./src/services/topicMembers").router);
-// authenticatedGroupMember.use("/log", require("./src/services/log"));
+authenticatedGroupMember.use("/log", require("./src/services/log"));
 
 
 // For /groups/{gid}/topics/{topic}/...
@@ -134,8 +134,8 @@ authenticatedTopicMember.use((req, res, next) =>
     )
 );
 
-// authenticatedGroupMember.use("/topics/:topic/messages", require("./src/services/messages"));
-// authenticatedGroupMember.use("/events", require("./src/services/events"));
+authenticatedTopicMember.use("/messages", require("./src/services/messages"));
+authenticatedTopicMember.use("/events", require("./src/services/events"));
 
 
 authenticatedGroupMember.use("/topics/:topic", authenticatedTopicMember);

@@ -70,8 +70,9 @@ const topicNotInGroup = res => {
  *                      description: The topics long-form description
  *              example:
  *                  topic: General
- *                  description: No description
+ *                  description: ""
  */
+
 
 // ----------------------------------------------------------------------------
 // (B)  Define routes.
@@ -97,7 +98,7 @@ const topicNotInGroup = res => {
  *                required: true
  *              - in: header
  *                name: Desc
- *                description: Whether the include the topic descriptions in the results
+ *                description: Whether to include the topic descriptions in the results
  *                schema:
  *                      type: boolean
  *          responses:
@@ -109,6 +110,12 @@ const topicNotInGroup = res => {
  *                              type: array
  *                              items:
  *                                  $ref: '#/components/schemas/Topic'
+ *              400:
+ *                  description: The Desc header was included but was not a boolean.
+ *                  content:
+ *                      application/json:
+ *                          schema:
+ *                              $ref: '#/components/schemas/Bad Request'
  *              401:
  *                  description: Unauthorized. Not logged in.
  *                  content:
@@ -150,7 +157,7 @@ router.get('/', (req, res) => {
 
     // Return all topics in group
     select(
-        "TOPICS", desc ? ["topic, description"] : "topic",
+        "TOPICS", desc ? "topic, description" : "topic",
         "gid", req.params.gid,
         (err, result) => err ? dbError(res, err) : getSuccess(res, result)
     );
@@ -256,7 +263,7 @@ router.get('/:topic', (req, res) =>
  *                          properties:
  *                              description:
  *                                  type: string 
- *                                  description: The description for the new topic. "No description" if not given.
+ *                                  description: The description for the new topic.
  *                          example:
  *                              description: Marketing discussions
  *          responses:

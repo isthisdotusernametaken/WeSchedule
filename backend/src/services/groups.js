@@ -23,6 +23,7 @@ const {
 const { validGroupNameLength } = require("../lengths");
 const { addGroupMember } = require("./groupMembers");
 const { addTopic } = require("./topics");
+const { addTopicMember } = require("./topicMembers");
 
 
 // ----------------------------------------------------------------------------
@@ -125,7 +126,7 @@ router.get('/', (req, res) =>  req.session.admin ?
  * @swagger
  * /groups:
  *      post:
- *          summary: (Composition 1) Create a new group owned by the current user and labeled with the provided name. COMPOSITION - After making the group, call the group member service to add the owner as a member and call the topic service to make a General topic, which allows the topic member service to be called to add the owner as a topic member).
+ *          summary: (Composition 1) Create a new group owned by the current user and labeled with the provided name. COMPOSITION - After making the group, call the group member service WS-4 to add the owner as a member and call the topic service WS-5 to make a General topic, which allows the topic member service WS-6 to be called to add the owner as a member of the topic created by the call to WS-5.
  *          tags: [Groups]
  *          requestBody:
  *              required: true
@@ -170,6 +171,9 @@ router.post('/', (req, res) => {
     if (requireBodyParams(req, res, "name"))
         return;
 
+    // COMPOSITION
+    // If any of the operations below fail, the group may be partially created.
+    // It may still be usable if it passed enough steps.
     insert(
         "GROUPS", "name, owner_username, creation_time",
         [req.body.name, req.session.user, new Date()], (err, result) => {
@@ -182,8 +186,12 @@ router.post('/', (req, res) => {
                 // Add General topic (call WS-5)
                 () => addTopic(
                     true, res, result.insertId, "General", "", () =>
-                    // Add owner as member of General topic (call WS-6)
-                    createSuccess(res, "Group created.")
+                        // Add owner as member of that new topic (call WS-6)
+                        addTopicMember(
+                            true, res,
+                            result.insertId, "General", req.session.user, true, true,
+                            () => createSuccess(res, "Group created.") // Setup complete
+                    )
                 ) 
             )
         }

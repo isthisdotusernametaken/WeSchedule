@@ -6,11 +6,12 @@ const SignUp = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
-    const [languages, setLanguages] = useState([["English"], ["en"]]);
 
     const [isEmailValid, setIsEmailValid] = useState(true);
     const [isPasswordValid, setIsPasswordValid] = useState(true);
     const [isConfirmPasswordValid, setIsConfirmPasswordValid] = useState(true);
+
+    const languages = props.languages;
 
     // Handle form submission
     const handleSubmit = (e) => {

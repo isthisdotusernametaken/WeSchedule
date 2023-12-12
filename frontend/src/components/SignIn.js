@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 
 function SignIn() {
-    const [email, setEmail] = useState('');
+    const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        console.log(email, password);
+        console.log(username, password);
     };
 
     return (
@@ -14,13 +14,13 @@ function SignIn() {
             <h2 className="mt-5">Sign In</h2>
             <form onSubmit={handleSubmit}>
                 <div className="form-group">
-                    <label htmlFor="inputEmail">Email address</label>
+                    <label htmlFor="inputEmail">Username</label>
                     <input
-                        type="email"
+                        type="text"
                         className="form-control"
-                        id="inputEmail"
+                        id="inputUsername"
                         value={email}
-                        onChange={e => setEmail(e.target.value)}
+                        onChange={e => setUsername(e.target.value)}
                         required
                     />
                 </div>

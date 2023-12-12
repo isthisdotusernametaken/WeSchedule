@@ -17,10 +17,7 @@ function MessageCenter({user}) {
     const inputField = useRef(null);
     const latestMsg = useRef(null);
 
-    const loadGroup = () => {
-        // Load corespondance based on group.
-        console.log("hi");
-    };
+ 
     // Used resource for this useEffect idea (https://reacthustle.com/blog/react-auto-scroll-to-bottom-tutorial)
     // to implement auto-scroll to bottom.
     useEffect(() => {
@@ -45,11 +42,7 @@ function MessageCenter({user}) {
         if (message === "" || message === null) {
             alert("Please don't send nothing. Thanks :)")
             inputField.current.value = "";
-        } else {
-            setMessages([...correspondence, {user: user, time: (new Date()).toLocaleDateString("en-US", timeFormat), content: message}]);
-            inputField.current.value = "";
         }
-
     }
 
     // This function is somewhat inspired by an exmaple found using chatGPT 3.5 ->Caleb
@@ -68,11 +61,6 @@ function MessageCenter({user}) {
     return (
         // For getting started on bootstrap this resource was used (https://youtu.be/eow125xV5-c?si=SkyOKDeQ2Z2mMK8P)
         <div className="border border-success p-2 mb-2" data-bs-theme="dark">
-           {/* <div className="groups-area p-2 mb-2 rounded-4">
-                <button onClick={createGroup}>+</button>
-                <button onClick={loadGroup}>Load group</button>
-                <div className="select-group-btn p-1 d-flex border bg-dark rounded-4">{groups.map(Groups)}</div>
-            </div> */}
             <div className="container inner-frame p-1 d-flex flex-column border bg-dark">
                 <div ref={latestMsg} className="h-100 overflow-auto">
                     {correspondence.map(MessageBubble)}

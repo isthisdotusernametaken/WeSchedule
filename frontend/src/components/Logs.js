@@ -5,14 +5,12 @@ function Logs({
     canAdd
 }) {
 
-    const [group, canAdd] = useState;
+    const [logs, setLogs] = useState;
 
     return (
         <div>
-            <button>
-                <p>Add Log</p>
-                {group.map(Log)}
-            </button>            
+            <button>Add Log</button>            
+            {logs.map(Log)}
         </div>
     );
 }

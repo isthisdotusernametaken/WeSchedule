@@ -1,12 +1,5 @@
 import { useState } from "react";
-
-function checkCanModify() {
-    if (canModify) {
-        return true;
-    } else {
-        return false;
-    }
-}
+    const [description, setDescription] = useState([]);
 
 function Events({
     group,
@@ -15,33 +8,17 @@ function Events({
         // component to display all log entries for a group (with time and description for each)
 
 }) {
-    const [event, setEvent] = useState([]);
-    const [editSelected, setEditSelected] = useState(false);
-    const [selected, setSelected] = useState(false);
 
     return (
         <div>
-            {/* Select topic */}
-            <button onClick={setEvent}>
-                {event.map(Event)}
-            </button>
+            {/*Should get description of selected topic. */}
+            <button onClick={setDescription(Event)}>Set Description</button>
             {/* If true add a delete and edit button one time.*/}
-            {checkCanModify ? 
+            {canModify ? 
                 <div>
-                    <button>Delete</button>
-                    <button onClick={selected 
-                        ? setEditSelected(true) 
-                        : setEditSelected(false)}>
-                            Edit
-                    </button>
-                    {/* If edit is pressed, input pops up one time.*/}
-                    {editSelected ? 
-                    <div>
-                        <input className="event-name"></input>
-                        <input className="time-duration"></input>
-                        <input className="description"></input>
-                    </div>
-                    : <div/>}
+                    <input className="event-name"></input>
+                    <input className="time-duration"></input>
+                    <input className="description"></input>
                 </div>
                 // Can't edit, just add an empty div.
                  : <div/>}
@@ -55,18 +32,17 @@ const Event = ({
 }) =>
     <div>
         <p>{eventName}</p>
-        {/* Check if event is selected and if so display description */}
-        <button 
-            onClick={selected 
-            ? setSelected(true) 
-            : setSelected(false)}>
-                Topic
-        </button>
-        {selected ?  
-            <p>Description: {description}</p>
-            : 
+        {canModify ? 
+            <div>
+                <button>Delete</button>
+                <button onClick={setDescription(description)}>Edit</button>
+                <input className="event-name"></input>
+                <input className="description"></input>
+                <input className="time"></input>
+            </div>
+            :
             <div/>
-            }
+        }
     </div>
 
 export default Events;

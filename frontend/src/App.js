@@ -2,7 +2,7 @@ import './App.css';
 
 import React, { useEffect, useState } from "react";
 
-import { get, post } from './backendRequest';
+import { get } from './backendRequest';
 
 import NavBar from './components/NavBar';
 import TabPanel from './components/TabPanel';
@@ -47,11 +47,7 @@ function App() {
         );
 
         // Get the logged in user's details on load
-        // loadUser();
-
-        post("/auth/login", { username: "bobsAccount", password: "Password0!" }).then(res => {
-            loadUser();
-        }).catch(err => console.log(err));
+        loadUser();
     }, []);
 
     return (

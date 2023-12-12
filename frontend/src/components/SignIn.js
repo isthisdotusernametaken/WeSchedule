@@ -1,12 +1,22 @@
 import React, { useState } from 'react';
+import { post } from '../backendRequest';
 
-function SignIn() {
+function SignIn({ loadUser, setErr, setSucc }) {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        console.log(username, password);
+
+        if (username.trim() === "" || password.trim() === "")
+            setErr("Username and password cannot be blank.");
+        else
+            post("/auth/login", { username: username, password: password }).then(res => {
+                setSucc(null);
+                loadUser();
+            }).catch(err => {
+                setErr(err);
+            });
     };
 
     return (
@@ -19,7 +29,6 @@ function SignIn() {
                         type="text"
                         className="form-control"
                         id="inputUsername"
-                        value={email}
                         onChange={e => setUsername(e.target.value)}
                         required
                     />
@@ -30,7 +39,6 @@ function SignIn() {
                         type="password"
                         className="form-control"
                         id="inputPassword"
-                        value={password}
                         onChange={e => setPassword(e.target.value)}
                         required
                     />

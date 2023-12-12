@@ -84,11 +84,13 @@ app.use("/docs", swaggerUI.serve, swaggerUI.setup(swaggerJSDoc({
 
 // No session required for this service. This service establishes sessions.
 app.use("/auth", require("./src/services/auth").router);
+app.use("/language", require("./src/services/language").router);
 
 
-// For all but /auth
+// For all but /auth and GET /language
 // If valid session, continue; otherwise, skip next callbacks.
-// Valid session required for all services below (2-10)
+// Valid session required for all services below (2-9). Valid session required
+// for part of WS-10, so this is handled in that service.
 const authenticatedUser = express.Router()
 authenticatedUser.use((req, res, next) => req.session.user != null ? next() :
     unauthorizedError(res, "Invalid session. You must log in with /auth/login.")
@@ -97,7 +99,6 @@ authenticatedUser.use((req, res, next) => req.session.user != null ? next() :
 authenticatedUser.use("/users", require("./src/services/users").router);
 authenticatedUser.use("/groups", require("./src/services/groups"));
 authenticatedUser.use("/groups/:gid/users", require("./src/services/groupMembers").router);
-authenticatedUser.use("/language", require("./src/services/language").router);
 
 
 // For /groups/{gid}/...

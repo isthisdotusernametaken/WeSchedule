@@ -84,7 +84,7 @@ Files
 
 Additional Notes
 	The 6 distinct custom headers in 5 different services are as follows:
-		Request header in topics WS-5 to get just names or names and descriptions (for choosing topics from a list vs choosing topics from a simple dropdown in the frontend; avoiding sending many long descriptions only for them to be discarded on arrival will save bandwidth and processing time).
+		Request header in topics WS-5 to get just names or names and descriptions (this was for choosing topics from a list vs choosing topics from a simple dropdown in the frontend; avoiding sending many long descriptions only for them to be discarded on arrival will save bandwidth and processing time; but the frontend design changed, and this was note used).
 		Request header in messages WS-7 to enable/disable automatic translation to the user's preferred language.
 		Request header in events WS-8 to specify earliest date to show events for; the request body could have been used, but the Swagger version does not allow a request body for GET.
 		Request header in language WS-10 to specify the destination language for translation.

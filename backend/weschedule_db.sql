@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Dec 11, 2023 at 10:59 PM
+-- Generation Time: Dec 12, 2023 at 05:38 AM
 -- Server version: 10.4.28-MariaDB
 -- PHP Version: 8.0.28
 
@@ -39,6 +39,25 @@ CREATE TABLE `events` (
   `duration` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `events`
+--
+
+INSERT INTO `events` (`gid`, `topic`, `time`, `name`, `description`, `duration`) VALUES
+(11, 'General', '2023-12-22 07:00:00', 'Holiday (No Work)', '', 0),
+(11, 'Production', '2023-12-04 10:00:00', 'Weekly Meeting', '', 30),
+(11, 'Production', '2023-12-11 10:00:00', 'Weekly Meeting', '', 30),
+(11, 'Production', '2023-12-12 08:00:00', 'Initial Release of WeSchedule', '', 0),
+(11, 'Production', '2023-12-18 10:00:00', 'Weekly Meeting (Maintenance Evaluation)', '', 30),
+(11, 'Sales', '2023-12-12 08:00:00', 'WeSchedule Day 1 Release Numbers', 'Discussing the sales performance of WeSchedule in the first day after its release.', 60),
+(11, 'Testing', '2023-12-05 09:00:00', 'Weekly Testers Meeting', '', 90),
+(11, 'Testing', '2023-12-12 09:00:00', 'Weekly Testers Meeting', '', 90),
+(11, 'Testing', '2023-12-19 09:00:00', 'Weekly Testers Meeting', '', 90),
+(12, 'General', '2023-12-16 09:00:00', 'Weekly Improv Session', '', 120),
+(12, 'General', '2023-12-23 09:00:00', 'Weekly Improv Session', '', 120),
+(12, 'General', '2023-12-30 09:00:00', 'Weekly Improv Session', '', 120),
+(13, 'General', '2023-12-14 12:15:00', 'National Unplug Everyone\'s Keyboard Day', '~sneak back into the office while everyone is on lunch break (move fast)~', 10);
+
 -- --------------------------------------------------------
 
 --
@@ -72,6 +91,16 @@ CREATE TABLE `group_logs` (
   `time` datetime NOT NULL,
   `description` varchar(1000) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `group_logs`
+--
+
+INSERT INTO `group_logs` (`gid`, `time`, `description`) VALUES
+(11, '2023-12-11 15:42:35', 'First day at the office.'),
+(12, '2023-12-11 16:55:30', 'First sponsor confirmed.'),
+(13, '2023-12-11 16:56:46', '~first secret meeting~'),
+(13, '2023-12-11 16:57:35', '~donut heist successful~');
 
 -- --------------------------------------------------------
 
@@ -131,7 +160,10 @@ INSERT INTO `messages` (`gid`, `topic`, `time`, `username`, `text`) VALUES
 (11, 'Testing', '2023-12-11 13:39:52', 'bobsaccount', 'This channel is for discussing and planning how to test products that are currently in development.'),
 (12, 'General', '2023-12-11 13:40:38', 'bobsaccount', 'Welcome to the acting group! Feel free to drop any fun ideas in the Skit Ideas topic.'),
 (12, 'General', '2023-12-11 13:51:32', 'yetAnotherUser', 'I am a dancer. That is to say, a conduit. I don\'t define movement — movement defines me. Every dance tells a story, a human mind. Exploration.'),
-(12, 'Scheduling', '2023-12-11 13:41:45', 'bobsaccount', 'We can discuss what dates work for everyone in this topic');
+(12, 'Scheduling', '2023-12-11 13:41:45', 'bobsaccount', 'We can discuss what dates work for everyone in this topic'),
+(13, 'General', '2023-12-11 20:36:33', 'yetanotheruser', 'i hope everyone has been enjoying the sneaky donuts'),
+(13, 'General', '2023-12-11 20:37:09', 'yetanotheruser', 'but it\'s time to plan for the crime of the century'),
+(13, 'General', '2023-12-11 20:37:46', 'yetanotheruser', 'this thursday at the office (check the events ~)');
 
 -- --------------------------------------------------------
 
@@ -230,7 +262,6 @@ INSERT INTO `users` (`username`, `name`, `email`, `salt`, `password_hash`, `join
 ('admin', 'Global Admin', 'admin', 0x1d11b6c076f3abf13f92e0b68e14cc29, 0x0ac1c17a205d25d87c9fe502b8be878c3286f640805b94d745e619087ea4706dceadeb5e8d6c8d1596664f728fd90d4c92dd5889b2a9fe9b62a1430c2a57dd23, '2023-12-08 22:47:18', 'en', 1),
 ('anotherUsername', 'Don R. Member', 'aGroupMember3@test.com', 0x6919550d37a4a7c35ff50e920309d44e, 0x6e33dc35f6b00bc6cb61ccb2637c7de01664a7d44817076c93d9844bb1bc481b6f8e0a565fdb31a1489893ed7a13e842a1166da5aa94253598a458d9769a2da8, '2023-12-08 11:34:00', 'es', 0),
 ('bobsAccount', 'Bob Realperson', 'aGroupOwner@test.com', 0x92b0c9e172b70fca14841c14957d375d, 0x1d32726bcdd9409b10c6bc18bee41eafab6ed73d20c4fba1296f2ca93621e9409fd79ec9156ae838ff6df671bfc0bb8aee8c02ea5c7506ca9e8b281ff0b42361, '2023-12-08 11:31:48', 'en', 0),
-('merefish', 'Ariel Person', 'example@example.com', 0xcb4c4ff983ad1a77f20038ee756b715e, 0x4a2167352d72ade7616bc78a2d47255386270e962f42302c9da66e3a34eaf1aeea25b87ae903172be9e281b27fd13389946b1f6c52dd0635ace8d68781fd60c9, '2023-12-09 17:27:20', 'en', 0),
 ('mylastnameiscool', 'Sally Lastname', 'aGroupMember2@test.com', 0xf821586ee56cab8e61791c38b57d4d4f, 0xc44cf2dc70566d3e1a1d7e8d20dcf338336e3c7c6152b02bf9c34bb3192ff4015034853ecf776a91fae5ce06c2db2238afaf969273792b5227506bf92c620718, '2023-12-08 11:33:50', 'en', 0),
 ('ray005', 'Ray Realpersonson', 'aGroupMember1@test.com', 0x0744198d7483d1ca0676f08f66aabec1, 0x61a34430988137bad291c5aab3c345a9988aaf54835ddcb684bcf030cb19e2d59782f8438e3b354392531f7ae3a5815f81944e20d31c19ff32218de2cc033ef3, '2023-12-08 11:33:00', 'en', 0),
 ('yetAnotherUser', 'Green Greene', 'aGroupMember4@test.com', 0x059583708b3ae723012107c7a817df04, 0x935eda74b3d5b8e3362e26b8069355922e8624aeb1bda29372373b3648cd7c634c786f51cded14450b18f4ee54ee250fc980c5ae8c5af23ba3f0278bc1cca230, '2023-12-11 13:09:54', 'es', 0);

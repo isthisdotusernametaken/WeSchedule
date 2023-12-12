@@ -20,7 +20,7 @@ const axios = require("axios");
 
 // Utilities
 const {
-    requireHeaders, getSuccess, clientError, serverError, serverErrorNoLog
+    requireHeaders, getSuccess, clientError, serverError, serverErrorNoLog, unauthorizedError
 } = require("../routing");
 
 // External URLs
@@ -215,6 +215,9 @@ router.get('/', (req, res) => languages ?
  *                              $ref: '#/components/schemas/Server Error'
  */
 router.post('/translate', (req, res) => {
+    if (req.session.user == null) // Require logged in user for translation
+        return unauthorizedError(res, "Invalid session. You must log in with /auth/login.");
+
     if (requireHeaders(req, res, "destLang"))
         return;
 

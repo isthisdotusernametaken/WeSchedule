@@ -7,13 +7,24 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon index.js"
   },
-  "keywords": ["REST"],
-  "contributors": ["Joshua Barbee", "Caleb Krauter", "Tyler Robinson", "Thomas Tien"],
+  "keywords": [
+    "REST"
+  ],
+  "contributors": [
+    "Joshua Barbee",
+    "Caleb Krauter",
+    "Tyler Robinson",
+    "Thomas Tien"
+  ],
   "license": "ISC",
   "dependencies": {
+    "axios": "^1.6.2",
     "cors": "^2.8.5",
     "express": "^4.18.2",
+    "express-session": "^1.17.3",
     "mysql": "^2.18.1",
-    "nodemon": "^3.0.1"
+    "nodemon": "^3.0.1",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.0"
   }
 }

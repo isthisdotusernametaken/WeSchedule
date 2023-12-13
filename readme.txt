@@ -77,6 +77,7 @@ Files
 			theme.js (Bootswatch theme switching code)
 			App.js (top-level UI design)
 			App.css (custom CSS)
+			backendRequest (configure and send requests to the backend)
 			components (custom React components)
 				...
 

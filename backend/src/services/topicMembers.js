@@ -486,7 +486,7 @@ router.put('/:username', (req, res) => {
  *                required: true
  *          responses:
  *              200:
- *                  description: User removed from topic. Their messages are not deleted.
+ *                  description: User removed from topic. Their messages are also deleted.
  *                  content:
  *                      application/json:
  *                          schema:

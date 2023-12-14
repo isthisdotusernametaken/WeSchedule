@@ -20,4 +20,13 @@ export const succHandler = setMessage => (
     succ => setMessage([true, succ])
 );
 
+export const clearHandler = setMessage => (
+    succ => setMessage([true, null])
+);
+
+export const clearAndCallbackHandler = (setMessage, callback) => (() => {
+    setMessage([true, null]);
+    callback();
+})
+
 export default Message;

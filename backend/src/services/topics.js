@@ -37,7 +37,7 @@ const addTopic = (
     !localAdmin ? // Only add topic if current user is local admin
         notLocalAdminError(res) :
     insert(
-        "TOPICS", "gid, topic, description", [gid, topic, description],
+        "TOPICS", "gid, topic, description", [gid, topic, description ?? ""],
         (err, result) =>
             err ?
                 ( // Insertion failed

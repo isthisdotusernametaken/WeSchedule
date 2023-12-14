@@ -370,6 +370,9 @@ router.put('/:gid', (req, res) => {
             if (result.affectedRows === 0) // No record matched both gid and owner
                 return notExistsOrNoAccess(req, res, "Group");
             
+            // If new owner is not already in group, add them.
+            addGroupMember(true, req, null, req.params.gid, req.body.owner, true, () => {});
+
             updateSuccess(res, result); // Updated
         }
     );

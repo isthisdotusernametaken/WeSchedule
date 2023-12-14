@@ -9,7 +9,6 @@ import AccountDetails from "./AccountDetails";
 function Account(props) {
     // Display success/error messages
     const [message, setMessage] = useState([true, null]);
-
     const setErr = errHandler(setMessage);
     const setSucc = succHandler(setMessage);
 

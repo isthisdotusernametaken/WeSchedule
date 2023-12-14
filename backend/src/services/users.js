@@ -20,7 +20,7 @@ const {
 const {
     generateSalt, hash, validPass, validEmail
 } = require("../emailPassword");
-const { validEmailLength } = require("../lengths");
+const { validEmailLength, validNameLength } = require("../lengths");
 
 // Language code validation
 const { validLanguage } = require("./language");

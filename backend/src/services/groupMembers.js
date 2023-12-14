@@ -57,6 +57,10 @@ const ifGroupMember = (forceAllow, res, group, user, successCallback) =>
 // Route (3) as a function. Add the specified user to the group if the current
 // user is a local admin. If the user is successfully added, call
 // successCallback.
+// 
+// If res is null, ignore error from DB; this is used for cases when the group
+// is known to exist and the operation can be considered to succeed if the user
+// is already in the group.
 const addGroupMember = (
     forceAllow, req, res,
     gid, username, local_admin,
@@ -67,7 +71,7 @@ const addGroupMember = (
         insert(
             "GROUP_MEMBERS", "gid, username, joined_time, local_admin",
             [gid, username, new Date(), local_admin],
-            (err, result) => err ?
+            (err, result) => err && res ? // Ignore errors if res is null/undefined
                 ( // Insertion failed
                     err.code === "ER_NO_REFERENCED_ROW_2" ? // User doesn't exist
                         clientError(res, "That user does not exist.") :
@@ -461,7 +465,8 @@ router.put('/:username', (req, res) => {
 
 // ----------------------------------------------------------------------------
 // (5) Remove the specified user from the group. Only local admins (or the
-//     current user for themself) can do this.
+//     current user for themself) can do this. The group owner cannot leave the
+//     group while still the owner
 //
 // URI: http://localhost:3001/groups/{gid}/users/{username}
 /**
@@ -485,11 +490,17 @@ router.put('/:username', (req, res) => {
  *                required: true
  *          responses:
  *              200:
- *                  description: User removed from group and all topics. Their messages are not deleted.
+ *                  description: User removed from group and all topics. Their messages are a;sp deleted.
  *                  content:
  *                      application/json:
  *                          schema:
  *                              $ref: '#/components/schemas/Success'
+ *              400:
+ *                  description: The user specified to be removed is the group owner.
+ *                  content:
+ *                      application/json:
+ *                          schema:
+ *                              $ref: '#/components/schemas/Bad Request'
  *              401:
  *                  description: Unauthorized. Not logged in or lack required privileges.
  *                  content:
@@ -517,23 +528,30 @@ router.put('/:username', (req, res) => {
  */
 router.delete('/:username', (req, res) =>
     ifGroupMember(false, res, req.params.gid, req.session.user, currentIsLocalAdmin =>
-        (!currentIsLocalAdmin && req.session.user !== req.body.username) ?
-            notLocalAdminError(res) : // Non-admin can only remove self
-            deleteData( // Admin can remove anyone but other admin (must demote first)
-                "GROUP_MEMBERS",
-                ["gid", "username", "local_admin"],
-                (req.session.user === req.body.username ? // Always allow user to delete self; only allow user to delete others if others are not admins
-                    [req.params.gid, req.params.username] :
-                    [req.params.gid, req.params.username, false]),
-                (err, result) => {
-                    if (err)
-                        return dbError(res, err);
-        
-                    if (result.affectedRows === 0)
-                        return userNotInGroupOrAdmin(res);
-        
-                    return success200(res, "User successfully removed.");
-                }
+        (!currentIsLocalAdmin && req.session.user !== req.params.username) ? // Non-admin can only remove self
+            notLocalAdminError(res) :
+            select( // Ensure user to be removed is not owner.
+                "GROUPS", "owner_username", "gid", req.params.gid,
+                (err, result) =>
+                    err ?
+                        dbError(res, err) :
+                    result[0]?.owner_username === req.params.username ? // Can't remove owner
+                        clientError(res, "The group owner cannot leave the group.") :
+                    deleteData( // Admin can remove anyone but other admin (must demote first)
+                        "GROUP_MEMBERS",
+                        (req.session.user === req.params.username ? // Always allow non-owner user to delete self; only allow user to delete others if others are not admins
+                            ["gid", "username"] :
+                            ["gid", "username", "local_admin"]),
+                        (req.session.user === req.params.username ?
+                            [req.params.gid, req.params.username] :
+                            [req.params.gid, req.params.username, false]),
+                        (err, result) =>
+                            err ?
+                                dbError(res, err) :
+                            result.affectedRows === 0 ?
+                                userNotInGroupOrAdmin(res) :
+                            success200(res, "User successfully removed.")
+                    )
             )
     )
 );

@@ -75,14 +75,14 @@ const tabButtonIdOf = (tabId) => `${tabId}-button`;
     The first tab with a defined active value is initially selected.
 */
 const createTabButtons = (tabs, startTab, panelId) => tabs.map(
-    ({ props: { title } }, i) => {
+    ({ props: { title, onClick } }, i) => {
         let tabId = tabIdOf(panelId, i);
 
         return (
             <li className="nav-item" role="presentation" key={i}>
                 <button className={`nav-link${i === startTab ? " active" : ""}`} id={tabButtonIdOf(tabId)}
                         data-bs-toggle="tab" data-bs-target={`#${tabId}`} role="tab" type="button"
-                        aria-controls={tabId} aria-selected={i === startTab}>
+                        aria-controls={tabId} aria-selected={i === startTab} onClick={onClick}>
                     {title}
                 </button>
             </li>

@@ -160,7 +160,7 @@ router.get('/', (req, res) => {
  * @swagger
  * /groups/{gid}/topics/{topic}/events/{time}:
  *      post:
- *          summary: Add the event with the specified name, start time, duration, and description to the topic. Only Events with event creation permission can do this.
+ *          summary: Add the event with the specified name, start time, duration, and description to the topic. Only topic members with event creation permission can do this.
  *          tags: [Events]
  *          parameters:
  *              - in: path

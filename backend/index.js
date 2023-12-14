@@ -38,7 +38,10 @@ const { ifTopicMember } = require("./src/services/topicMembers");
 // ----------------------------------------------------------------------------
 const app = express();
 app.use(express.json())
-app.use(cors());
+app.use(cors({
+    origin: "http://localhost:3000", // Allow frontend
+    credentials: true
+}));
 
 // Intercept errors before our code to ensure consistent error messages.
 app.use((err, req, res, next) =>

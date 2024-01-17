@@ -37,7 +37,7 @@ CREATE TABLE `events` (
   `name` varchar(50) NOT NULL,
   `description` varchar(1000) NOT NULL,
   `duration` int(11) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
 --
 -- Dumping data for table `events`
@@ -69,7 +69,7 @@ CREATE TABLE `groups` (
   `name` char(50) NOT NULL,
   `owner_username` char(20) NOT NULL,
   `creation_time` datetime NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
 --
 -- Dumping data for table `groups`
@@ -90,7 +90,7 @@ CREATE TABLE `group_logs` (
   `gid` int(11) NOT NULL,
   `time` datetime NOT NULL,
   `description` varchar(1000) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
 --
 -- Dumping data for table `group_logs`
@@ -113,7 +113,7 @@ CREATE TABLE `group_members` (
   `username` char(20) NOT NULL,
   `joined_time` datetime NOT NULL,
   `local_admin` tinyint(1) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
 --
 -- Dumping data for table `group_members`
@@ -144,26 +144,26 @@ CREATE TABLE `messages` (
   `time` datetime NOT NULL,
   `username` char(20) NOT NULL,
   `text` varchar(1000) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
 --
 -- Dumping data for table `messages`
 --
 
 INSERT INTO `messages` (`gid`, `topic`, `time`, `username`, `text`) VALUES
-(11, 'General', '2023-12-11 13:30:28', 'bobsaccount', 'Welcome to the group!'),
+(11, 'General', '2023-12-11 13:30:28', 'bobsAccount', 'Welcome to the group!'),
 (11, 'General', '2023-12-11 13:43:55', 'mylastnameiscool', 'Hello'),
-(11, 'Production', '2023-12-11 13:38:58', 'bobsaccount', 'This channel is for discussing and scheduling the releases of products.'),
+(11, 'Production', '2023-12-11 13:38:58', 'bobsAccount', 'This channel is for discussing and scheduling the releases of products.'),
 (11, 'Production', '2023-12-11 13:44:50', 'mylastnameiscool', 'The deadline for the scheduling app\'s release is coming up in a couple days'),
 (11, 'Production', '2023-12-11 13:45:27', 'yetAnotherUser', 'Ugh, don\'t remind me'),
-(11, 'Sales', '2023-12-11 13:39:23', 'bobsaccount', 'This channel is for developing and evaluating marketing strategies.'),
-(11, 'Testing', '2023-12-11 13:39:52', 'bobsaccount', 'This channel is for discussing and planning how to test products that are currently in development.'),
-(12, 'General', '2023-12-11 13:40:38', 'bobsaccount', 'Welcome to the acting group! Feel free to drop any fun ideas in the Skit Ideas topic.'),
+(11, 'Sales', '2023-12-11 13:39:23', 'bobsAccount', 'This channel is for developing and evaluating marketing strategies.'),
+(11, 'Testing', '2023-12-11 13:39:52', 'bobsAccount', 'This channel is for discussing and planning how to test products that are currently in development.'),
+(12, 'General', '2023-12-11 13:40:38', 'bobsAccount', 'Welcome to the acting group! Feel free to drop any fun ideas in the Skit Ideas topic.'),
 (12, 'General', '2023-12-11 13:51:32', 'yetAnotherUser', 'I am a dancer. That is to say, a conduit. I don\'t define movement — movement defines me. Every dance tells a story, a human mind. Exploration.'),
-(12, 'Scheduling', '2023-12-11 13:41:45', 'bobsaccount', 'We can discuss what dates work for everyone in this topic'),
-(13, 'General', '2023-12-11 20:36:33', 'yetanotheruser', 'i hope everyone has been enjoying the sneaky donuts'),
-(13, 'General', '2023-12-11 20:37:09', 'yetanotheruser', 'but it\'s time to plan for the crime of the century'),
-(13, 'General', '2023-12-11 20:37:46', 'yetanotheruser', 'this thursday at the office (check the events ~)');
+(12, 'Scheduling', '2023-12-11 13:41:45', 'bobsAccount', 'We can discuss what dates work for everyone in this topic'),
+(13, 'General', '2023-12-11 20:36:33', 'yetAnotherUser', 'i hope everyone has been enjoying the sneaky donuts'),
+(13, 'General', '2023-12-11 20:37:09', 'yetAnotherUser', 'but it\'s time to plan for the crime of the century'),
+(13, 'General', '2023-12-11 20:37:46', 'yetAnotherUser', 'this thursday at the office (check the events ~)');
 
 -- --------------------------------------------------------
 
@@ -175,7 +175,7 @@ CREATE TABLE `topics` (
   `gid` int(11) NOT NULL,
   `topic` varchar(50) NOT NULL,
   `description` varchar(1000) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
 --
 -- Dumping data for table `topics`
@@ -203,7 +203,7 @@ CREATE TABLE `topic_members` (
   `username` char(20) NOT NULL,
   `event_perm` tinyint(1) NOT NULL,
   `message_perm` tinyint(1) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
 --
 -- Dumping data for table `topic_members`
@@ -230,7 +230,7 @@ INSERT INTO `topic_members` (`gid`, `topic`, `username`, `event_perm`, `message_
 (12, 'Scheduling', 'bobsAccount', 1, 1),
 (12, 'Scheduling', 'mylastnameiscool', 1, 1),
 (12, 'Scheduling', 'yetAnotherUser', 1, 1),
-(12, 'Skit ideas', 'bobsAccount', 1, 1),
+(12, 'Skit Ideas', 'bobsAccount', 1, 1),
 (12, 'Skit Ideas', 'mylastnameiscool', 1, 1),
 (12, 'Skit Ideas', 'yetAnotherUser', 1, 1),
 (13, 'General', 'anotherUsername', 1, 1),
@@ -252,7 +252,7 @@ CREATE TABLE `users` (
   `joined_time` datetime NOT NULL,
   `lang` char(20) NOT NULL,
   `admin` tinyint(1) NOT NULL DEFAULT 0
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
 --
 -- Dumping data for table `users`
@@ -360,7 +360,7 @@ ALTER TABLE `group_logs`
 --
 ALTER TABLE `group_members`
   ADD CONSTRAINT `GM_GID_FK` FOREIGN KEY (`gid`) REFERENCES `groups` (`gid`) ON DELETE CASCADE,
-  ADD CONSTRAINT `GM_USERNAME_FK` FOREIGN KEY (`username`) REFERENCES `users` (`username`) ON DELETE NO ACTION;
+  ADD CONSTRAINT `GM_USERNAME_FK` FOREIGN KEY (`username`) REFERENCES `users` (`username`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `messages`

@@ -36,4 +36,4 @@
 /backend/yarn-error.log*
 
 # secrets
-/backend/config/
+/backend/config/azureKey.json

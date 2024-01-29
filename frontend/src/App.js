@@ -178,7 +178,7 @@ function App() {
                             groupName={group.name} groupMembers={groupMembers} loadGroupMembers={loadGroupMembers} groupRID={groupRID} /></Tab>}
                 {group.gid != null &&
                     <Tab title={"Topics" + (topic.topic ? ` (${topic.topic})` : "")} onClick={loadTopics}>
-                        <Topics localAdmin={localAdmin} username={user.uername} group={group} topics={topics} topic={topic}
+                        <Topics localAdmin={localAdmin} username={user.username} group={group} topics={topics} topic={topic}
                             setTopic={setTopic} clearTopic={clearTopic} clearBeforeTopic={clearBeforeTopic} loadTopics={loadTopics}
                             groupRID={groupRID} topicRID={topicRID} /></Tab>}
 
